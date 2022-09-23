@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/poodinis-config
+poodinis-config.so
+poodinis-config.dylib
+poodinis-config.dll
+poodinis-config.a
+poodinis-config.lib
+poodinis-config-test-*
+*.exe
+*.o
+*.obj
+*.lst
