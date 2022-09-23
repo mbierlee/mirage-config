@@ -49,6 +49,12 @@ class ObjectNode : ConfigNode {
     this(ConfigNode[string] children) {
         this.children = children;
     }
+
+    this(string[string] values) {
+        foreach (key, value; values) {
+            children[key] = new ValueNode(value);
+        }
+    }
 }
 
 class ArrayNode : ConfigNode {
@@ -76,6 +82,14 @@ class ArrayPathSegment : PathSegment {
 
     this(const size_t index) {
         this.index = index;
+    }
+}
+
+class PropertyPathSegment : PathSegment {
+    const string propertyName;
+
+    this(const string propertyName) {
+        this.propertyName = propertyName;
     }
 }
 
@@ -114,7 +128,7 @@ class ConfigPath {
             }
         }
 
-        throw new Exception("Not yet implemented");
+        return ret(new PropertyPathSegment(segment));
     }
 }
 
@@ -142,7 +156,22 @@ class ConfigDictionary {
             if (arrayPath) {
                 auto arrayNode = cast(ArrayNode) currentNode;
                 if (arrayNode) {
+                    if (arrayNode.children.length < arrayPath.index) {
+                        throw new ConfigReadException("Array index out of bounds: " ~ configPath);
+                    }
+
                     currentNode = arrayNode.children[arrayPath.index];
+                }
+            }
+
+            auto propertyPath = cast(PropertyPathSegment) currentPathSegment;
+            if (propertyPath) {
+                auto objectNode = cast(ObjectNode) currentNode;
+                if (objectNode) {
+                    auto propertyNode = propertyPath.propertyName in objectNode.children;
+                    if (propertyNode) {
+                        currentNode = *propertyNode;
+                    }
                 }
             }
 
@@ -212,5 +241,19 @@ version (unittest) {
         assert(dictionary.get("[0]") == "aap");
         assert(dictionary.get("[1]") == "noot");
         assert(dictionary.get("[2]") == "mies");
+    }
+
+    @("Get value from object at root")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode([
+            "aap": "monkey",
+            "noot": "nut",
+            "mies": "mies" // It's a name!
+        ]);
+
+        assert(dictionary.get("aap") == "monkey");
+        assert(dictionary.get("noot") == "nut");
+        assert(dictionary.get("mies") == "mies");
     }
 }
