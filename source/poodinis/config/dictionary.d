@@ -10,7 +10,7 @@
 module poodinis.config.dictionary;
 
 import std.exception : enforce;
-import std.string : split, startsWith, endsWith;
+import std.string : split, startsWith, endsWith, join;
 import std.conv : to, ConvException;
 
 class ConfigReadException : Exception {
@@ -27,6 +27,7 @@ class PathParseException : Exception {
 }
 
 interface ConfigNode {
+    string nodeType();
 }
 
 class ValueNode : ConfigNode {
@@ -37,6 +38,10 @@ class ValueNode : ConfigNode {
 
     this(string value) {
         this.value = value;
+    }
+
+    string nodeType() {
+        return "value";
     }
 }
 
@@ -55,6 +60,10 @@ class ObjectNode : ConfigNode {
             children[key] = new ValueNode(value);
         }
     }
+
+    string nodeType() {
+        return "object";
+    }
 }
 
 class ArrayNode : ConfigNode {
@@ -72,9 +81,13 @@ class ArrayNode : ConfigNode {
             children ~= new ValueNode(value);
         }
     }
+
+    string nodeType() {
+        return "array";
+    }
 }
 
-class PathSegment {
+interface PathSegment {
 }
 
 class ArrayPathSegment : PathSegment {
@@ -95,6 +108,7 @@ class PropertyPathSegment : PathSegment {
 
 class ConfigPath {
     private const string path;
+    private string[] previousSegments;
     private string[] segments;
 
     this(const string path) {
@@ -108,7 +122,8 @@ class ConfigPath {
         }
 
         PathSegment ret(PathSegment segment) {
-            segments = segments.length > 1 ? segments[1 .. $] : [];
+            previousSegments ~= segments[0];
+            segments = segments[1 .. $];
             return segment;
         }
 
@@ -129,6 +144,10 @@ class ConfigPath {
         }
 
         return ret(new PropertyPathSegment(segment));
+    }
+
+    string getCurrentPath() {
+        return previousSegments.join(".");
     }
 }
 
@@ -151,13 +170,29 @@ class ConfigDictionary {
         auto path = new ConfigPath(configPath);
         auto currentNode = rootNode;
         PathSegment currentPathSegment = path.getNextSegment();
+        string createExceptionPath() {
+            return "'" ~ configPath ~ "' (at '" ~ path.getCurrentPath() ~ "')";
+        }
+
         while (currentPathSegment !is null) {
+            if (currentNode is null) {
+                throw new ConfigReadException(
+                    "Path does not exist: " ~ createExceptionPath());
+            }
+
+            auto valueNode = cast(ValueNode) currentNode;
+            if (valueNode) {
+                throw new ConfigReadException(
+                    "Path does not exist: " ~ createExceptionPath());
+            }
+
             auto arrayPath = cast(ArrayPathSegment) currentPathSegment;
             if (arrayPath) {
                 auto arrayNode = cast(ArrayNode) currentNode;
                 if (arrayNode) {
                     if (arrayNode.children.length < arrayPath.index) {
-                        throw new ConfigReadException("Array index out of bounds: " ~ configPath);
+                        throw new ConfigReadException(
+                            "Array index out of bounds: " ~ createExceptionPath());
                     }
 
                     currentNode = arrayNode.children[arrayPath.index];
@@ -171,6 +206,9 @@ class ConfigDictionary {
                     auto propertyNode = propertyPath.propertyName in objectNode.children;
                     if (propertyNode) {
                         currentNode = *propertyNode;
+                    } else {
+                        throw new ConfigReadException(
+                            "Path does not exist: " ~ createExceptionPath());
                     }
                 }
             }
@@ -183,7 +221,7 @@ class ConfigDictionary {
             return value.value;
         } else {
             throw new ConfigReadException(
-                "The configuration at the given path is not a value: " ~ configPath);
+                "Value expected but " ~ currentNode.nodeType ~ " found at path: " ~ createExceptionPath());
         }
     }
 }
@@ -256,4 +294,67 @@ version (unittest) {
         assert(dictionary.get("noot") == "nut");
         assert(dictionary.get("mies") == "mies");
     }
+
+    @("Get value from object in object")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode([
+            "server": new ObjectNode([
+                    "port": "8080"
+                ])
+        ]);
+
+        assert(dictionary.get("server.port") == "8080");
+    }
+
+    @("Get value from array in object")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode([
+            "hostname": new ArrayNode(["google.com", "dlang.org"])
+        ]);
+
+        assert(dictionary.get("hostname.[1]") == "dlang.org");
+    }
+
+    @("Exception is thrown when array out of bounds when fetching from root")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ArrayNode(["google.com", "dlang.org"]);
+
+        assertThrown!ConfigReadException(dictionary.get("[5]"));
+    }
+
+    @("Exception is thrown when array out of bounds when fetching from object")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode([
+            "hostname": new ArrayNode(["google.com", "dlang.org"])
+        ]);
+
+        assertThrown!ConfigReadException(dictionary.get("hostname.[5]"));
+    }
+
+    @("Exception is thrown when path does not exist")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode(
+            [
+                "hostname": new ObjectNode(["cluster": new ValueNode("")])
+            ]);
+
+        assertThrown!ConfigReadException(dictionary.get("hostname.cluster.spacey"));
+    }
+
+    @("Exception is thrown when given path terminates too early")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode(
+            [
+                "hostname": new ObjectNode(["cluster": new ValueNode(null)])
+            ]);
+
+        assertThrown!ConfigReadException(dictionary.get("hostname"));
+    }
+
 }
