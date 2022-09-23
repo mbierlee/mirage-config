@@ -8,3 +8,5 @@
  */
 
 module poodinis.config;
+
+public import poodinis.config.dictionary;
