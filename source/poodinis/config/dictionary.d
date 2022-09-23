@@ -29,7 +29,7 @@ class PathParseException : Exception {
 interface ConfigNode {
 }
 
-class NodeValue : ConfigNode {
+class ValueNode : ConfigNode {
     string value;
 
     this() {
@@ -40,7 +40,7 @@ class NodeValue : ConfigNode {
     }
 }
 
-class NodeObject : ConfigNode {
+class ObjectNode : ConfigNode {
     ConfigNode[string] children;
 
     this() {
@@ -51,7 +51,7 @@ class NodeObject : ConfigNode {
     }
 }
 
-class NodeArray : ConfigNode {
+class ArrayNode : ConfigNode {
     ConfigNode[] children;
 
     this() {
@@ -63,7 +63,7 @@ class NodeArray : ConfigNode {
 
     this(string[] values...) {
         foreach (string value; values) {
-            children ~= new NodeValue(value);
+            children ~= new ValueNode(value);
         }
     }
 }
@@ -126,7 +126,7 @@ class ConfigDictionary {
         enforce!ConfigReadException(configPath.length > 0, "Supplied config path is empty");
 
         if (configPath == ".") {
-            auto rootValue = cast(NodeValue) rootNode;
+            auto rootValue = cast(ValueNode) rootNode;
             if (rootValue) {
                 return rootValue.value;
             } else {
@@ -140,7 +140,7 @@ class ConfigDictionary {
         while (currentPathSegment !is null) {
             auto arrayPath = cast(ArrayPathSegment) currentPathSegment;
             if (arrayPath) {
-                auto arrayNode = cast(NodeArray) currentNode;
+                auto arrayNode = cast(ArrayNode) currentNode;
                 if (arrayNode) {
                     currentNode = arrayNode.children[arrayPath.index];
                 }
@@ -149,7 +149,7 @@ class ConfigDictionary {
             currentPathSegment = path.getNextSegment();
         }
 
-        auto value = cast(NodeValue) currentNode;
+        auto value = cast(ValueNode) currentNode;
         if (value) {
             return value.value;
         } else {
@@ -164,9 +164,9 @@ version (unittest) {
 
     @("Dictionary creation")
     unittest {
-        auto root = new NodeObject([
-            "english": new NodeArray([new NodeValue("one"), new NodeValue("two")]),
-            "spanish": new NodeArray(new NodeValue("uno"), new NodeValue("dos"))
+        auto root = new ObjectNode([
+            "english": new ArrayNode([new ValueNode("one"), new ValueNode("two")]),
+            "spanish": new ArrayNode(new ValueNode("uno"), new ValueNode("dos"))
         ]);
 
         auto dictionary = new ConfigDictionary();
@@ -183,7 +183,7 @@ version (unittest) {
     @("Get value in dictionary with empty path fails")
     unittest {
         auto dictionary = new ConfigDictionary();
-        dictionary.rootNode = new NodeValue("hehehe");
+        dictionary.rootNode = new ValueNode("hehehe");
 
         assertThrown!ConfigReadException(dictionary.get(""));
     }
@@ -191,7 +191,7 @@ version (unittest) {
     @("Get value in root")
     unittest {
         auto dictionary = new ConfigDictionary();
-        dictionary.rootNode = new NodeValue("yup");
+        dictionary.rootNode = new ValueNode("yup");
 
         assert(dictionary.get(".") == "yup");
     }
@@ -199,7 +199,7 @@ version (unittest) {
     @("Get value in root fails when root is not a value")
     unittest {
         auto dictionary = new ConfigDictionary();
-        dictionary.rootNode = new NodeArray();
+        dictionary.rootNode = new ArrayNode();
 
         assertThrown!ConfigReadException(dictionary.get("."));
     }
@@ -207,7 +207,7 @@ version (unittest) {
     @("Get array value from root")
     unittest {
         auto dictionary = new ConfigDictionary();
-        dictionary.rootNode = new NodeArray("aap", "noot", "mies");
+        dictionary.rootNode = new ArrayNode("aap", "noot", "mies");
 
         assert(dictionary.get("[0]") == "aap");
         assert(dictionary.get("[1]") == "noot");
