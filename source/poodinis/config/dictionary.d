@@ -381,4 +381,30 @@ version (unittest) {
         assertThrown!ConfigReadException(dictionary.get("hostname"));
     }
 
+    @("Get value from objects in array")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ArrayNode(
+            new ObjectNode(["wrong": "yes"]),
+            new ObjectNode(["wrong": "no"]),
+            new ObjectNode(["wrong": "very"]),
+        );
+
+        assert(dictionary.get("[1].wrong") == "no");
+    }
+
+    @("Get value from config with mixed types")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode([
+            "uno": cast(ConfigNode) new ValueNode("one"),
+            "dos": cast(ConfigNode) new ArrayNode(["nope", "two"]),
+            "tres": cast(ConfigNode) new ObjectNode(["thisone": "three"])
+        ]);
+
+        assert(dictionary.get("uno") == "one");
+        assert(dictionary.get("dos.[1]") == "two");
+        assert(dictionary.get("tres.thisone") == "three");
+    }
+
 }
