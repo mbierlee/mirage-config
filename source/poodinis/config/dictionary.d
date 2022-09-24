@@ -170,47 +170,63 @@ class ConfigDictionary {
         auto path = new ConfigPath(configPath);
         auto currentNode = rootNode;
         PathSegment currentPathSegment = path.getNextSegment();
+
         string createExceptionPath() {
             return "'" ~ configPath ~ "' (at '" ~ path.getCurrentPath() ~ "')";
         }
 
+        void throwPathNotExists() {
+            throw new ConfigReadException("Path does not exist: " ~ createExceptionPath());
+        }
+
+        void ifNotNullPointer(void* obj, void delegate() fn) {
+            if (obj) {
+                fn();
+            } else {
+                throwPathNotExists();
+            }
+        }
+
+        void ifNotNull(Object obj, void delegate() fn) {
+            if (obj) {
+                fn();
+            } else {
+                throwPathNotExists();
+            }
+        }
+
         while (currentPathSegment !is null) {
             if (currentNode is null) {
-                throw new ConfigReadException(
-                    "Path does not exist: " ~ createExceptionPath());
+                throwPathNotExists();
             }
 
             auto valueNode = cast(ValueNode) currentNode;
             if (valueNode) {
-                throw new ConfigReadException(
-                    "Path does not exist: " ~ createExceptionPath());
+                throwPathNotExists();
             }
 
             auto arrayPath = cast(ArrayPathSegment) currentPathSegment;
             if (arrayPath) {
                 auto arrayNode = cast(ArrayNode) currentNode;
-                if (arrayNode) {
+                ifNotNull(arrayNode, {
                     if (arrayNode.children.length < arrayPath.index) {
                         throw new ConfigReadException(
                             "Array index out of bounds: " ~ createExceptionPath());
                     }
 
                     currentNode = arrayNode.children[arrayPath.index];
-                }
+                });
             }
 
             auto propertyPath = cast(PropertyPathSegment) currentPathSegment;
             if (propertyPath) {
                 auto objectNode = cast(ObjectNode) currentNode;
-                if (objectNode) {
+                ifNotNull(objectNode, {
                     auto propertyNode = propertyPath.propertyName in objectNode.children;
-                    if (propertyNode) {
+                    ifNotNullPointer(propertyNode, {
                         currentNode = *propertyNode;
-                    } else {
-                        throw new ConfigReadException(
-                            "Path does not exist: " ~ createExceptionPath());
-                    }
-                }
+                    });
+                });
             }
 
             currentPathSegment = path.getNextSegment();
@@ -353,6 +369,14 @@ version (unittest) {
             [
                 "hostname": new ObjectNode(["cluster": new ValueNode(null)])
             ]);
+
+        assertThrown!ConfigReadException(dictionary.get("hostname"));
+    }
+
+    @("Exception is thrown when given path does not exist because config is an array")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ArrayNode();
 
         assertThrown!ConfigReadException(dictionary.get("hostname"));
     }
