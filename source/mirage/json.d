@@ -1,4 +1,6 @@
 /**
+ * Utilities for loading JSON configurations.
+ *
  * Authors:
  *  Mike Bierlee, m.bierlee@lostmoment.com
  * Copyright: 2022 Mike Bierlee
@@ -14,15 +16,41 @@ import std.conv : to;
 
 import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, ObjectNode, ArrayNode, ConfigCreationException;
 
+/** 
+ * Creates configuration dictionaries from JSONs.
+ */
 class JsonConfigFactory : ConfigFactory {
+
+     /**
+     * Parse configuration from the given JSON string.
+     *
+     * Params:
+     *   contents = Text contents of the config to be parsed.
+     * Returns: The parsed configuration.
+     */
     override ConfigDictionary parseConfig(string contents) {
         return parseJson(parseJSON(contents));
     }
 
+    /** 
+     * Parse configuration from a JSONValue tree. 
+     *
+     * Params:
+     *   contents = Text contents of the config to be parsed.
+     * Returns: The parsed configuration.
+     */
     ConfigDictionary parseJson(JSONValue json) {
         return new ConfigDictionary(convertJValue(json));
     }
 
+    /** 
+     * Alias for parseConfig
+     *
+     * Params:
+     *   contents = Text contents of the config to be parsed.
+     * Returns: The parsed configuration.
+     * See_Also: parseConfig
+     */
     ConfigDictionary parseJson(string json) {
         return parseConfig(json);
     }

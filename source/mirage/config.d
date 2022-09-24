@@ -1,4 +1,6 @@
 /**
+ * Base utilities for working with configurations.
+ *
  * Authors:
  *  Mike Bierlee, m.bierlee@lostmoment.com
  * Copyright: 2022 Mike Bierlee
@@ -14,18 +16,27 @@ import std.string : split, startsWith, endsWith, join, lastIndexOf;
 import std.conv : to, ConvException;
 import std.file : readText;
 
+/** 
+ * Used by the ConfigDictionary when something goes wrong when reading configuration.
+ */
 class ConfigReadException : Exception {
     this(string msg, string file = __FILE__, size_t line = __LINE__) {
         super(msg, file, line);
     }
 }
 
+/** 
+ * Used by ConfigFactory instances when loading or parsing configuration fails.
+ */
 class ConfigCreationException : Exception {
     this(string msg, string file = __FILE__, size_t line = __LINE__) {
         super(msg, file, line);
     }
 }
 
+/** 
+ * Used by ConfigDictionary when there is something wrong with the path when calling ConfigDictionary.get()
+ */
 class PathParseException : Exception {
     this(string msg, string path, string file = __FILE__, size_t line = __LINE__) {
         string fullMsg = msg ~ " (Path: " ~ path ~ ")";
@@ -33,10 +44,17 @@ class PathParseException : Exception {
     }
 }
 
+/** 
+ * The configuration tree is made up of specific types of ConfigNodes.
+ * Used as generic type for ConfigFactory and ConfigDictionary.
+ */
 interface ConfigNode {
     string nodeType();
 }
 
+/** 
+ * A configuration item that is any sort of primitive value (strings, numbers or null).
+ */
 class ValueNode : ConfigNode {
     string value;
 
@@ -52,6 +70,11 @@ class ValueNode : ConfigNode {
     }
 }
 
+/** 
+ * A configuration item that is an object. 
+ * 
+ * ObjectNodes contain a node dictionary that points to other ConfigNodes.
+ */
 class ObjectNode : ConfigNode {
     ConfigNode[string] children;
 
@@ -73,6 +96,11 @@ class ObjectNode : ConfigNode {
     }
 }
 
+/** 
+ * A configuration item that is an array.
+ *
+ * Contains other ConfigNodes as children.
+ */
 class ArrayNode : ConfigNode {
     ConfigNode[] children;
 
@@ -177,6 +205,9 @@ private class ConfigPath {
     }
 }
 
+/** 
+ * A ConfigDictionary contains the configuration tree and facilities to get values from that tree.
+ */
 class ConfigDictionary {
     ConfigNode rootNode;
 
@@ -187,9 +218,21 @@ class ConfigDictionary {
         this.rootNode = rootNode;
     }
 
+    /** 
+     * Get values from the configuration using config path notation.
+     *
+     * Params:
+     *   configPath = Path to the wanted config value. The path is separated by dots, e.g. "server.public.hostname". 
+     *                Values from arrays can be selected by brackets, for example: "server[3].hostname.ports[0]".
+     *                When the config is just a value, for example just a string, it can be fetched by just specifying "." as path.
+     *                Although the path should be universally the same over all types of config files, some might not lend to this structure,
+     *                and have a more specific way of retrieving data from the config. See the examples and specific config factories for
+     *                more details.
+     *
+     * Returns: The value at the path in the configuration. It is always a string so the user will have to convert it to other types.
+     */
     string get(string configPath) {
         enforce!ConfigReadException(rootNode !is null, "The config is empty");
-        // enforce!ConfigReadException(configPath.length > 0, "Supplied config path is empty");
 
         auto path = new ConfigPath(configPath);
         auto currentNode = rootNode;
@@ -266,12 +309,29 @@ class ConfigDictionary {
     }
 }
 
+/** 
+ * The base class used by configuration factories for specific file types.
+ */
 abstract class ConfigFactory {
+    /** 
+     * Loads a configuration from the specified path from disk.
+     *
+     * Params:
+     *   path = Path to file. OS dependent, but UNIX paths are generally working.
+     * Returns: The parsed configuration.
+     */
     ConfigDictionary loadFile(string path) {
         auto json = readText(path);
         return parseConfig(json);
     }
 
+    /**
+     * Parse configuration from the given string.
+     *
+     * Params:
+     *   contents = Text contents of the config to be parsed.
+     * Returns: The parsed configuration.
+     */
     ConfigDictionary parseConfig(string contents);
 }
 
