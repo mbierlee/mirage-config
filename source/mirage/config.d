@@ -26,11 +26,11 @@ class PathParseException : Exception {
     }
 }
 
-interface ConfigNode {
+private interface ConfigNode {
     string nodeType();
 }
 
-class ValueNode : ConfigNode {
+private class ValueNode : ConfigNode {
     string value;
 
     this() {
@@ -45,7 +45,7 @@ class ValueNode : ConfigNode {
     }
 }
 
-class ObjectNode : ConfigNode {
+private class ObjectNode : ConfigNode {
     ConfigNode[string] children;
 
     this() {
@@ -66,7 +66,7 @@ class ObjectNode : ConfigNode {
     }
 }
 
-class ArrayNode : ConfigNode {
+private class ArrayNode : ConfigNode {
     ConfigNode[] children;
 
     this() {
@@ -87,10 +87,10 @@ class ArrayNode : ConfigNode {
     }
 }
 
-interface PathSegment {
+private interface PathSegment {
 }
 
-class ArrayPathSegment : PathSegment {
+private class ArrayPathSegment : PathSegment {
     const size_t index;
 
     this(const size_t index) {
@@ -98,7 +98,7 @@ class ArrayPathSegment : PathSegment {
     }
 }
 
-class PropertyPathSegment : PathSegment {
+private class PropertyPathSegment : PathSegment {
     const string propertyName;
 
     this(const string propertyName) {
@@ -106,7 +106,7 @@ class PropertyPathSegment : PathSegment {
     }
 }
 
-class ConfigPath {
+private class ConfigPath {
     private const string path;
     private string[] previousSegments;
     private string[] segments;
@@ -259,6 +259,11 @@ class ConfigDictionary {
                 "Value expected but " ~ currentNode.nodeType ~ " found at path: " ~ createExceptionPath());
         }
     }
+}
+
+interface ConfigLoader {
+    ConfigDictionary parseConfig(string contents);
+    ConfigDictionary loadFile(string path);
 }
 
 version (unittest) {
