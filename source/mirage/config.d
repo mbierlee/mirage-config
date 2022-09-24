@@ -175,7 +175,7 @@ class ConfigDictionary {
 
     string get(string configPath) {
         enforce!ConfigReadException(rootNode !is null, "The config is empty");
-        enforce!ConfigReadException(configPath.length > 0, "Supplied config path is empty");
+        // enforce!ConfigReadException(configPath.length > 0, "Supplied config path is empty");
 
         auto path = new ConfigPath(configPath);
         auto currentNode = rootNode;
@@ -278,15 +278,15 @@ version (unittest) {
         assertThrown!ConfigReadException(dictionary.get("."));
     }
 
-    @("Get value in dictionary with empty path fails")
+    @("Get value in root with empty path")
     unittest {
         auto dictionary = new ConfigDictionary();
         dictionary.rootNode = new ValueNode("hehehe");
 
-        assertThrown!ConfigReadException(dictionary.get(""));
+        assert(dictionary.get("") == "hehehe");
     }
 
-    @("Get value in root")
+    @("Get value in root with just a dot")
     unittest {
         auto dictionary = new ConfigDictionary();
         dictionary.rootNode = new ValueNode("yup");
