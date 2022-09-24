@@ -229,7 +229,7 @@ class ConfigDictionary {
      *                and have a more specific way of retrieving data from the config. See the examples and specific config factories for
      *                more details.
      *
-     * Returns: The value at the path in the configuration. It is always a string so the user will have to convert it to other types.
+     * Returns: The value at the path in the configuration. To convert it use get!T().
      */
     string get(string configPath) {
         enforce!ConfigReadException(rootNode !is null, "The config is empty");
@@ -307,6 +307,17 @@ class ConfigDictionary {
                 "Value expected but " ~ currentNode.nodeType ~ " found at path: " ~ createExceptionPath());
         }
     }
+
+    /** 
+     * Get values from the configuration and attempts to convert them to the specified type.
+     *
+     * Params:
+     *   configPath = Path to the wanted config value. See get(). 
+     * Returns: The value at the path in the configuration.
+     */
+    ConvertToType get(ConvertToType)(string configPath) {
+        return get(configPath).to!ConvertToType;
+    }
 }
 
 /** 
@@ -337,6 +348,7 @@ abstract class ConfigFactory {
 
 version (unittest) {
     import std.exception : assertThrown;
+    import std.math.operations : isClose;
 
     @("Dictionary creation")
     unittest {
@@ -520,5 +532,21 @@ version (unittest) {
             ]);
 
         assert(dictionary.get("one.two[1]") == "mino");
+    }
+
+    @("Get and convert values")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode([
+            "uno": new ValueNode("1223"),
+            "dos": new ValueNode("true"),
+            "tres": new ValueNode("Hi you"),
+            "quatro": new ValueNode("1.3")
+        ]);
+
+        assert(dictionary.get!int("uno") == 1223);
+        assert(dictionary.get!bool("dos") == true);
+        assert(dictionary.get!string("tres") == "Hi you");
+        assert(isClose(dictionary.get!float("quatro"), 1.3));
     }
 }
