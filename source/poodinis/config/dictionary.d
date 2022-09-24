@@ -10,7 +10,7 @@
 module poodinis.config.dictionary;
 
 import std.exception : enforce;
-import std.string : split, startsWith, endsWith, join;
+import std.string : split, startsWith, endsWith, join, lastIndexOf;
 import std.conv : to, ConvException;
 
 class ConfigReadException : Exception {
@@ -113,11 +113,25 @@ class ConfigPath {
 
     this(const string path) {
         this.path = path;
+        segmentAndNormalize(path);
+    }
 
+    private void segmentAndNormalize(string path) {
         foreach (segment; path.split(".")) {
-            if (segment.length > 0) {
-                segments ~= segment;
+            if (segment.length <= 0) {
+                continue;
             }
+
+            if (segment.endsWith("]") && !segment.startsWith("[")) {
+                auto openBracketPos = segment.lastIndexOf("[");
+                if (openBracketPos != -1) {
+                    segments ~= segment[0 .. openBracketPos];
+                    segments ~= segment[openBracketPos .. $];
+                    continue;
+                }
+            }
+
+            segments ~= segment;
         }
     }
 
@@ -423,4 +437,14 @@ version (unittest) {
         assert(dictionary.get(".one..two...three....") == "four");
     }
 
+    @("Support conventional array indexing notation")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode(
+            [
+                "one": new ObjectNode(["two": new ArrayNode(["dino", "mino"])])
+            ]);
+
+        assert(dictionary.get("one.two[1]") == "mino");
+    }
 }
