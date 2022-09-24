@@ -177,15 +177,6 @@ class ConfigDictionary {
         enforce!ConfigReadException(rootNode !is null, "The config is empty");
         enforce!ConfigReadException(configPath.length > 0, "Supplied config path is empty");
 
-        if (configPath == ".") {
-            auto rootValue = cast(ValueNode) rootNode;
-            if (rootValue) {
-                return rootValue.value;
-            } else {
-                throw new ConfigReadException("The root of the config is not a value type");
-            }
-        }
-
         auto path = new ConfigPath(configPath);
         auto currentNode = rootNode;
         PathSegment currentPathSegment = path.getNextSegment();
