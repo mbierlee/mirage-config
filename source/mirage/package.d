@@ -7,6 +7,6 @@
  *  The full terms of the license can be found in the LICENSE file.
  */
 
-module poodinis.config;
+module mirage;
 
-public import poodinis.config.dictionary;
+public import mirage.config;

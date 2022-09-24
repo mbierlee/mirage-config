@@ -7,7 +7,7 @@
  *  The full terms of the license can be found in the LICENSE file.
  */
 
-module poodinis.config.dictionary;
+module mirage.config;
 
 import std.exception : enforce;
 import std.string : split, startsWith, endsWith, join, lastIndexOf;

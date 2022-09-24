@@ -1,9 +1,8 @@
 {
-  "name": "poodinis-config",
-  "description": "Config loading and injection using Poodinis",
+  "name": "mirage-config",
+  "description": "Application Configuration Utilities",
   "copyright": "Copyright © 2022, Mike Bierlee",
   "authors": ["Mike Bierlee"],
   "license": "MIT",
-  "dependencies": { "poodinis": "~>8.1.2" },
   "targetType": "library"
 }
