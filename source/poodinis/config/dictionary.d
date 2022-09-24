@@ -113,7 +113,12 @@ class ConfigPath {
 
     this(const string path) {
         this.path = path;
-        this.segments = path.split(".");
+
+        foreach (segment; path.split(".")) {
+            if (segment.length > 0) {
+                segments ~= segment;
+            }
+        }
     }
 
     PathSegment getNextSegment() {
@@ -405,6 +410,17 @@ version (unittest) {
         assert(dictionary.get("uno") == "one");
         assert(dictionary.get("dos.[1]") == "two");
         assert(dictionary.get("tres.thisone") == "three");
+    }
+
+    @("Ignore empty segments")
+    unittest {
+        auto dictionary = new ConfigDictionary();
+        dictionary.rootNode = new ObjectNode(
+            [
+                "one": new ObjectNode(["two": new ObjectNode(["three": "four"])])
+            ]);
+
+        assert(dictionary.get(".one..two...three....") == "four");
     }
 
 }
