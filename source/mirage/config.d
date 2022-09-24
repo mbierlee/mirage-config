@@ -232,18 +232,57 @@ class ConfigDictionary {
      * Returns: The value at the path in the configuration. To convert it use get!T().
      */
     string get(string configPath) {
+        auto path = new ConfigPath(configPath);
+        auto node = getNodeAt(path);
+        auto value = cast(ValueNode) node;
+        if (value) {
+            return value.value;
+        } else {
+            throw new ConfigReadException(
+                "Value expected but " ~ node.nodeType ~ " found at path: " ~ createExceptionPath(
+                    path));
+        }
+    }
+
+    /** 
+     * Get values from the configuration and attempts to convert them to the specified type.
+     *
+     * Params:
+     *   configPath = Path to the wanted config value. See get(). 
+     * Returns: The value at the path in the configuration.
+     */
+    ConvertToType get(ConvertToType)(string configPath) {
+        return get(configPath).to!ConvertToType;
+    }
+
+    /** 
+     * Fetch a sub-section of the config as another config.
+     * 
+     * Commonly used for example to fetch  further configuration from arrays, e.g.: `getConfig("http.servers[3]")` 
+     * which then returns the rest of the config at that path.
+     *
+     * Params:
+     *   configPath = Path to the wanted config. See get(). 
+     * Returns: A sub-section of the configuration.
+     */
+    ConfigDictionary getConfig(string configPath) {
+        auto path = new ConfigPath(configPath);
+        auto node = getNodeAt(path);
+        return new ConfigDictionary(node);
+    }
+
+    string createExceptionPath(ConfigPath path) {
+        return "'" ~ path.path ~ "' (at '" ~ path.getCurrentPath() ~ "')";
+    }
+
+    private ConfigNode getNodeAt(ConfigPath path) {
         enforce!ConfigReadException(rootNode !is null, "The config is empty");
 
-        auto path = new ConfigPath(configPath);
         auto currentNode = rootNode;
         PathSegment currentPathSegment = path.getNextSegment();
 
-        string createExceptionPath() {
-            return "'" ~ configPath ~ "' (at '" ~ path.getCurrentPath() ~ "')";
-        }
-
         void throwPathNotExists() {
-            throw new ConfigReadException("Path does not exist: " ~ createExceptionPath());
+            throw new ConfigReadException("Path does not exist: " ~ createExceptionPath(path));
         }
 
         void ifNotNullPointer(void* obj, void delegate() fn) {
@@ -278,7 +317,7 @@ class ConfigDictionary {
                 ifNotNull(arrayNode, {
                     if (arrayNode.children.length < arrayPath.index) {
                         throw new ConfigReadException(
-                            "Array index out of bounds: " ~ createExceptionPath());
+                            "Array index out of bounds: " ~ createExceptionPath(path));
                     }
 
                     currentNode = arrayNode.children[arrayPath.index];
@@ -299,24 +338,7 @@ class ConfigDictionary {
             currentPathSegment = path.getNextSegment();
         }
 
-        auto value = cast(ValueNode) currentNode;
-        if (value) {
-            return value.value;
-        } else {
-            throw new ConfigReadException(
-                "Value expected but " ~ currentNode.nodeType ~ " found at path: " ~ createExceptionPath());
-        }
-    }
-
-    /** 
-     * Get values from the configuration and attempts to convert them to the specified type.
-     *
-     * Params:
-     *   configPath = Path to the wanted config value. See get(). 
-     * Returns: The value at the path in the configuration.
-     */
-    ConvertToType get(ConvertToType)(string configPath) {
-        return get(configPath).to!ConvertToType;
+        return currentNode;
     }
 }
 
@@ -377,7 +399,7 @@ version (unittest) {
 
     @("Get value in root with just a dot")
     unittest {
-        auto dictionary = new ConfigDictionary( new ValueNode("yup"));
+        auto dictionary = new ConfigDictionary(new ValueNode("yup"));
 
         assert(dictionary.get(".") == "yup");
     }
@@ -554,5 +576,20 @@ version (unittest) {
         assert(dictionary.get!bool("dos") == true);
         assert(dictionary.get!string("tres") == "Hi you");
         assert(isClose(dictionary.get!float("quatro"), 1.3));
+    }
+
+    @("Get config from array")
+    unittest {
+        auto dictionaryOne = new ConfigDictionary(new ObjectNode(
+                [
+                "servers": new ArrayNode([
+                    new ObjectNode(["hostname": "lala.com"]),
+                    new ObjectNode(["hostname": "lele.com"])
+                ])
+            ])
+        );
+
+        auto config = dictionaryOne.getConfig("servers[0]");
+        assert(config.get("hostname") == "lala.com");
     }
 }
