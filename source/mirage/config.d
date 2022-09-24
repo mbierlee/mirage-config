@@ -12,6 +12,7 @@ module mirage.config;
 import std.exception : enforce;
 import std.string : split, startsWith, endsWith, join, lastIndexOf;
 import std.conv : to, ConvException;
+import std.file : readText;
 
 class ConfigReadException : Exception {
     this(string msg, string file = __FILE__, size_t line = __LINE__) {
@@ -265,8 +266,12 @@ class ConfigDictionary {
     }
 }
 
-interface ConfigFactory {
-    ConfigDictionary loadFile(string path);
+abstract class ConfigFactory {
+    ConfigDictionary loadFile(string path) {
+        auto json = readText(path);
+        return parseConfig(json);
+    }
+
     ConfigDictionary parseConfig(string contents);
 }
 

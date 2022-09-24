@@ -15,11 +15,7 @@ import std.conv : to;
 import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, ObjectNode, ArrayNode, ConfigCreationException;
 
 class JsonConfigFactory : ConfigFactory {
-    ConfigDictionary loadFile(string path) {
-        throw new Exception("not yet implemented");
-    }
-
-    ConfigDictionary parseConfig(string contents) {
+    override ConfigDictionary parseConfig(string contents) {
         return parseJson(parseJSON(contents));
     }
 
@@ -124,6 +120,17 @@ version (unittest) {
 
         auto loader = new JsonConfigFactory();
         auto config = loader.parseJson(json);
+
+        assert(config.get("name") == "Groot");
+        assert(config.get("traits[1]") == "tree");
+        assert(config.get("age") == "8728");
+        assert(config.get("taxNumber") == null);
+    }
+
+    @("Load JSON file")
+    unittest {
+        auto loader = new JsonConfigFactory();
+        auto config = loader.loadFile("testfiles/groot.json");
 
         assert(config.get("name") == "Groot");
         assert(config.get("traits[1]") == "tree");
