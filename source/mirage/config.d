@@ -19,6 +19,12 @@ class ConfigReadException : Exception {
     }
 }
 
+class ConfigCreationException : Exception {
+    this(string msg, string file = __FILE__, size_t line = __LINE__) {
+        super(msg, file, line);
+    }
+}
+
 class PathParseException : Exception {
     this(string msg, string path, string file = __FILE__, size_t line = __LINE__) {
         string fullMsg = msg ~ " (Path: " ~ path ~ ")";
@@ -26,11 +32,11 @@ class PathParseException : Exception {
     }
 }
 
-private interface ConfigNode {
+interface ConfigNode {
     string nodeType();
 }
 
-private class ValueNode : ConfigNode {
+class ValueNode : ConfigNode {
     string value;
 
     this() {
@@ -45,7 +51,7 @@ private class ValueNode : ConfigNode {
     }
 }
 
-private class ObjectNode : ConfigNode {
+class ObjectNode : ConfigNode {
     ConfigNode[string] children;
 
     this() {
@@ -66,7 +72,7 @@ private class ObjectNode : ConfigNode {
     }
 }
 
-private class ArrayNode : ConfigNode {
+class ArrayNode : ConfigNode {
     ConfigNode[] children;
 
     this() {
@@ -158,7 +164,7 @@ private class ConfigPath {
                 auto index = indexString.to!size_t;
                 return ret(new ArrayPathSegment(index));
             } catch (ConvException e) {
-                throw new PathParseException("Array index '" ~ indexString ~ "' is not acceptable as an array number", path);
+                throw new PathParseException("Value '" ~ indexString ~ "' is not acceptable as an array index", path);
             }
         }
 
@@ -172,6 +178,13 @@ private class ConfigPath {
 
 class ConfigDictionary {
     ConfigNode rootNode;
+
+    this() {
+    }
+
+    this(ConfigNode rootNode) {
+        this.rootNode = rootNode;
+    }
 
     string get(string configPath) {
         enforce!ConfigReadException(rootNode !is null, "The config is empty");
@@ -252,9 +265,9 @@ class ConfigDictionary {
     }
 }
 
-interface ConfigLoader {
-    ConfigDictionary parseConfig(string contents);
+interface ConfigFactory {
     ConfigDictionary loadFile(string path);
+    ConfigDictionary parseConfig(string contents);
 }
 
 version (unittest) {

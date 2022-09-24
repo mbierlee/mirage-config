@@ -10,3 +10,4 @@
 module mirage;
 
 public import mirage.config;
+public import mirage.json;
