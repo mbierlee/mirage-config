@@ -9,7 +9,7 @@
 
 module mirage.json;
 
-import std.json : JSONValue, JSONType;
+import std.json : JSONValue, JSONType, parseJSON;
 import std.conv : to;
 
 import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, ObjectNode, ArrayNode, ConfigCreationException;
@@ -20,7 +20,7 @@ class JsonConfigFactory : ConfigFactory {
     }
 
     ConfigDictionary parseConfig(string contents) {
-        throw new Exception("not yet implemented");
+        return parseJson(parseJSON(contents));
     }
 
     ConfigDictionary parseJson(JSONValue json) {
@@ -73,7 +73,8 @@ class JsonConfigFactory : ConfigFactory {
 }
 
 version (unittest) {
-    @("Parse JSON") unittest {
+    @("Parse JSON")
+    unittest {
         JSONValue serverJson = ["hostname": "hosty.com", "port": "1234"];
         JSONValue nullJson = ["isNull": null];
         JSONValue socketsJson = [
@@ -99,7 +100,8 @@ version (unittest) {
         assert(config.get("decimalas[2]") == "6.7");
     }
 
-    @("Parse JSON root values") unittest {
+    @("Parse JSON root values")
+    unittest {
         auto loader = new JsonConfigFactory();
 
         assert(loader.parseJson(JSONValue("hi")).get(".") == "hi");
@@ -107,5 +109,25 @@ version (unittest) {
         assert(loader.parseJson(JSONValue(null)).get(".") == null);
         assert(loader.parseJson(JSONValue(1.8)).get(".") == "1.8");
         assert(loader.parseJson(JSONValue([1, 2, 3])).get("[2]") == "3");
+    }
+
+    @("Parse JSON string")
+    unittest {
+        string json = "
+            {
+                \"name\": \"Groot\",
+                \"traits\": [\"groot\", \"tree\"],
+                \"age\": 8728,
+                \"taxNumber\": null
+            } 
+        ";
+
+        auto loader = new JsonConfigFactory();
+        auto config = loader.parseJson(json);
+
+        assert(config.get("name") == "Groot");
+        assert(config.get("traits[1]") == "tree");
+        assert(config.get("age") == "8728");
+        assert(config.get("taxNumber") == null);
     }
 }
