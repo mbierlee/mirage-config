@@ -21,7 +21,7 @@ import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, O
  */
 class JsonConfigFactory : ConfigFactory {
 
-     /**
+    /**
      * Parse configuration from the given JSON string.
      *
      * Params:
@@ -36,7 +36,7 @@ class JsonConfigFactory : ConfigFactory {
      * Parse configuration from a JSONValue tree. 
      *
      * Params:
-     *   contents = Text contents of the config to be parsed.
+     *   contents = JSONValue config to be parsed.
      * Returns: The parsed configuration.
      */
     ConfigDictionary parseJson(JSONValue json) {
@@ -96,6 +96,39 @@ class JsonConfigFactory : ConfigFactory {
     }
 }
 
+/** 
+ * Parse JSON config from the given JSON string.
+
+ * Params:
+ *   json = Text contents of the config to be parsed.
+ * Returns: The parsed configuration.
+ */
+ConfigDictionary parseJsonConfig(string json) {
+    return new JsonConfigFactory().parseConfig(json);
+}
+
+/** 
+ * Parse JSON config from the given JSONValue.
+ *
+ * Params:
+ *   contents = JSONValue config to be parsed.
+ * Returns: The parsed configuration.
+ */
+ConfigDictionary parseJsonConfig(JSONValue json) {
+    return new JsonConfigFactory().parseJson(json);
+}
+
+/** 
+ * Load a JSON configuration file from disk.
+ *
+ * Params:
+ *   filePath = Path to the JSON configuration file.
+ * Returns: The loaded configuration.
+ */
+ConfigDictionary loadJsonConfig(string filePath) {
+    return new JsonConfigFactory().loadFile(filePath);
+}
+
 version (unittest) {
     @("Parse JSON")
     unittest {
@@ -111,8 +144,7 @@ version (unittest) {
             "numberos": numbersJson, "decimalas": decimalsJson
         ];
 
-        auto loader = new JsonConfigFactory();
-        auto config = loader.parseJson(jsonConfig);
+        auto config = parseJsonConfig(jsonConfig);
 
         assert(config.get("server.hostname") == "hosty.com");
         assert(config.get("server.port") == "1234");
@@ -126,13 +158,11 @@ version (unittest) {
 
     @("Parse JSON root values")
     unittest {
-        auto loader = new JsonConfigFactory();
-
-        assert(loader.parseJson(JSONValue("hi")).get(".") == "hi");
-        assert(loader.parseJson(JSONValue(1)).get(".") == "1");
-        assert(loader.parseJson(JSONValue(null)).get(".") == null);
-        assert(loader.parseJson(JSONValue(1.8)).get(".") == "1.8");
-        assert(loader.parseJson(JSONValue([1, 2, 3])).get("[2]") == "3");
+        assert(parseJsonConfig(JSONValue("hi")).get(".") == "hi");
+        assert(parseJsonConfig(JSONValue(1)).get(".") == "1");
+        assert(parseJsonConfig(JSONValue(null)).get(".") == null);
+        assert(parseJsonConfig(JSONValue(1.8)).get(".") == "1.8");
+        assert(parseJsonConfig(JSONValue([1, 2, 3])).get("[2]") == "3");
     }
 
     @("Parse JSON string")
@@ -146,8 +176,7 @@ version (unittest) {
             } 
         ";
 
-        auto loader = new JsonConfigFactory();
-        auto config = loader.parseJson(json);
+        auto config = parseJsonConfig(json);
 
         assert(config.get("name") == "Groot");
         assert(config.get("traits[1]") == "tree");
@@ -157,8 +186,7 @@ version (unittest) {
 
     @("Load JSON file")
     unittest {
-        auto loader = new JsonConfigFactory();
-        auto config = loader.loadFile("testfiles/groot.json");
+        auto config = loadJsonConfig("testfiles/groot.json");
 
         assert(config.get("name") == "Groot");
         assert(config.get("traits[1]") == "tree");

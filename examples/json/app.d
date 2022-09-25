@@ -7,15 +7,15 @@
  *  The full terms of the license can be found in the LICENSE file.
  */
 
-import mirage.json : JsonConfigFactory;
+import mirage.json : loadJsonConfig, parseJsonConfig;
 
 import std.stdio : writeln;
 import std.conv : to;
 
 void main() {
-    auto config = new JsonConfigFactory().loadFile("config.json");
+    auto config = loadJsonConfig("config.json");
     auto serverConfig = config.getConfig("server");
-    auto databaseConfig = new JsonConfigFactory().parseConfig("
+    auto databaseConfig = parseJsonConfig("
         {
             \"host\": \"localhost\",
             \"port\": 5432
