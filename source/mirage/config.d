@@ -12,9 +12,12 @@
 module mirage.config;
 
 import std.exception : enforce;
-import std.string : split, startsWith, endsWith, join, lastIndexOf, strip;
+import std.string : split, startsWith, endsWith, join, lastIndexOf, strip, toLower;
 import std.conv : to, ConvException;
 import std.file : readText;
+import std.path : extension;
+
+import mirage.json : loadJsonConfig;
 
 /** 
  * Used by the ConfigDictionary when something goes wrong when reading configuration.
@@ -370,6 +373,16 @@ abstract class ConfigFactory {
     ConfigDictionary parseConfig(string contents);
 }
 
+ConfigDictionary loadConfig(const string configPath) {
+    auto extension = configPath.extension.toLower;
+    if (extension == ".json") {
+        return loadJsonConfig(configPath);
+    }
+
+    throw new ConfigCreationException(
+        "File extension '" ~ extension ~ "' is not recognized as a supported config file format. Please use a specific function to load it, such as 'loadJsonConfig()'");
+}
+
 version (unittest) {
     import std.exception : assertThrown;
     import std.math.operations : isClose;
@@ -602,5 +615,15 @@ version (unittest) {
         );
 
         assert(config.get("  que.    pasa hombre   ") == "not much");
+    }
+
+    @("Load configurations using the loadConfig convenience function")
+    unittest {
+        auto jsonConfig = loadConfig("testfiles/groot.json");
+
+        assert(jsonConfig.get("name") == "Groot");
+        assert(jsonConfig.get("traits[1]") == "tree");
+        assert(jsonConfig.get("age") == "8728");
+        assert(jsonConfig.get("taxNumber") == null);
     }
 }

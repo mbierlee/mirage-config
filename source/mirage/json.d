@@ -103,7 +103,7 @@ class JsonConfigFactory : ConfigFactory {
  *   json = Text contents of the config to be parsed.
  * Returns: The parsed configuration.
  */
-ConfigDictionary parseJsonConfig(string json) {
+ConfigDictionary parseJsonConfig(const string json) {
     return new JsonConfigFactory().parseConfig(json);
 }
 
@@ -114,7 +114,7 @@ ConfigDictionary parseJsonConfig(string json) {
  *   contents = JSONValue config to be parsed.
  * Returns: The parsed configuration.
  */
-ConfigDictionary parseJsonConfig(JSONValue json) {
+ConfigDictionary parseJsonConfig(const JSONValue json) {
     return new JsonConfigFactory().parseJson(json);
 }
 
@@ -125,7 +125,7 @@ ConfigDictionary parseJsonConfig(JSONValue json) {
  *   filePath = Path to the JSON configuration file.
  * Returns: The loaded configuration.
  */
-ConfigDictionary loadJsonConfig(string filePath) {
+ConfigDictionary loadJsonConfig(const string filePath) {
     return new JsonConfigFactory().loadFile(filePath);
 }
 
