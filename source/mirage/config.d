@@ -12,7 +12,7 @@
 module mirage.config;
 
 import std.exception : enforce;
-import std.string : split, startsWith, endsWith, join, lastIndexOf;
+import std.string : split, startsWith, endsWith, join, lastIndexOf, strip;
 import std.conv : to, ConvException;
 import std.file : readText;
 
@@ -153,20 +153,22 @@ private class ConfigPath {
 
     private void segmentAndNormalize(string path) {
         foreach (segment; path.split(".")) {
-            if (segment.length <= 0) {
+            auto trimmedSegment = segment.strip;
+
+            if (trimmedSegment.length <= 0) {
                 continue;
             }
 
-            if (segment.endsWith("]") && !segment.startsWith("[")) {
-                auto openBracketPos = segment.lastIndexOf("[");
+            if (trimmedSegment.endsWith("]") && !trimmedSegment.startsWith("[")) {
+                auto openBracketPos = trimmedSegment.lastIndexOf("[");
                 if (openBracketPos != -1) {
-                    segments ~= segment[0 .. openBracketPos];
-                    segments ~= segment[openBracketPos .. $];
+                    segments ~= trimmedSegment[0 .. openBracketPos];
+                    segments ~= trimmedSegment[openBracketPos .. $];
                     continue;
                 }
             }
 
-            segments ~= segment;
+            segments ~= trimmedSegment;
         }
     }
 
@@ -591,5 +593,14 @@ version (unittest) {
 
         auto config = dictionaryOne.getConfig("servers[0]");
         assert(config.get("hostname") == "lala.com");
+    }
+
+    @("Trim spaces in path segments")
+    unittest {
+        auto dictionary = new ConfigDictionary(
+            new ObjectNode(["que": new ObjectNode(["pasa hombre": "not much"])])
+        );
+
+        assert(dictionary.get("  que.    pasa hombre   ") == "not much");
     }
 }
