@@ -1,0 +1,10 @@
+{
+  "application": {
+    "name": "Fake HTTP Server"
+  },
+  "server": {
+    "host": "localhost",
+    "port": 8080,
+    "protocol": "https"
+  }
+}

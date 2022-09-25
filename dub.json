@@ -4,5 +4,26 @@
   "copyright": "Copyright © 2022, Mike Bierlee",
   "authors": ["Mike Bierlee"],
   "license": "MIT",
-  "targetType": "library"
+  "configurations": [
+    {
+      "name": "library",
+      "targetType": "library"
+    },
+    {
+      "name": "unittest",
+      "targetType": "executable",
+      "sourcePaths": ["source"]
+    },
+    {
+      "name": "jsonExample",
+      "targetType": "executable",
+      "description": "Example of how to read and work with JSON configurations.",
+      "targetName": "jsonExample",
+      "sourcePaths": ["examples/json"],
+      "importPaths": ["source"],
+      "copyFiles": ["examples/json/config.json"],
+      "targetPath": "bin/examples/json",
+      "workingDirectory": "bin/examples/json"
+    }
+  ]
 }

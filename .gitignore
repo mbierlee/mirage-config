@@ -8,8 +8,10 @@ mirage-config.dylib
 mirage-config.dll
 mirage-config.a
 mirage-config.lib
+mirage-config.pdb
 mirage-config-test-*
 *.exe
 *.o
 *.obj
 *.lst
+/bin/
