@@ -1,6 +1,6 @@
 {
   "name": "mirage-config",
-  "description": "Application Configuration Utilities",
+  "description": "Configuration utilities supporting formats such as JSON",
   "copyright": "Copyright © 2022, Mike Bierlee",
   "authors": ["Mike Bierlee"],
   "license": "MIT",
