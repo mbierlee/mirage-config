@@ -381,64 +381,64 @@ version (unittest) {
             "spanish": new ArrayNode(new ValueNode("uno"), new ValueNode("dos"))
         ]);
 
-        auto dictionary = new ConfigDictionary();
-        dictionary.rootNode = root;
+        auto config = new ConfigDictionary();
+        config.rootNode = root;
     }
 
-    @("Get value in dictionary with empty root fails")
+    @("Get value in config with empty root fails")
     unittest {
-        auto dictionary = new ConfigDictionary();
+        auto config = new ConfigDictionary();
 
-        assertThrown!ConfigReadException(dictionary.get("."));
+        assertThrown!ConfigReadException(config.get("."));
     }
 
     @("Get value in root with empty path")
     unittest {
-        auto dictionary = new ConfigDictionary(new ValueNode("hehehe"));
+        auto config = new ConfigDictionary(new ValueNode("hehehe"));
 
-        assert(dictionary.get("") == "hehehe");
+        assert(config.get("") == "hehehe");
     }
 
     @("Get value in root with just a dot")
     unittest {
-        auto dictionary = new ConfigDictionary(new ValueNode("yup"));
+        auto config = new ConfigDictionary(new ValueNode("yup"));
 
-        assert(dictionary.get(".") == "yup");
+        assert(config.get(".") == "yup");
     }
 
     @("Get value in root fails when root is not a value")
     unittest {
-        auto dictionary = new ConfigDictionary(new ArrayNode());
+        auto config = new ConfigDictionary(new ArrayNode());
 
-        assertThrown!ConfigReadException(dictionary.get("."));
+        assertThrown!ConfigReadException(config.get("."));
     }
 
     @("Get array value from root")
     unittest {
-        auto dictionary = new ConfigDictionary(new ArrayNode("aap", "noot", "mies"));
+        auto config = new ConfigDictionary(new ArrayNode("aap", "noot", "mies"));
 
-        assert(dictionary.get("[0]") == "aap");
-        assert(dictionary.get("[1]") == "noot");
-        assert(dictionary.get("[2]") == "mies");
+        assert(config.get("[0]") == "aap");
+        assert(config.get("[1]") == "noot");
+        assert(config.get("[2]") == "mies");
     }
 
     @("Get value from object at root")
     unittest {
-        auto dictionary = new ConfigDictionary(new ObjectNode([
+        auto config = new ConfigDictionary(new ObjectNode([
                 "aap": "monkey",
                 "noot": "nut",
                 "mies": "mies" // It's a name!
             ])
         );
 
-        assert(dictionary.get("aap") == "monkey");
-        assert(dictionary.get("noot") == "nut");
-        assert(dictionary.get("mies") == "mies");
+        assert(config.get("aap") == "monkey");
+        assert(config.get("noot") == "nut");
+        assert(config.get("mies") == "mies");
     }
 
     @("Get value from object in object")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode([
                     "server": new ObjectNode([
                         "port": "8080"
@@ -446,85 +446,85 @@ version (unittest) {
                 ])
         );
 
-        assert(dictionary.get("server.port") == "8080");
+        assert(config.get("server.port") == "8080");
     }
 
     @("Get value from array in object")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode([
                 "hostname": new ArrayNode(["google.com", "dlang.org"])
             ])
         );
 
-        assert(dictionary.get("hostname.[1]") == "dlang.org");
+        assert(config.get("hostname.[1]") == "dlang.org");
     }
 
     @("Exception is thrown when array out of bounds when fetching from root")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ArrayNode([
                     "google.com", "dlang.org"
                 ])
         );
 
-        assertThrown!ConfigReadException(dictionary.get("[5]"));
+        assertThrown!ConfigReadException(config.get("[5]"));
     }
 
     @("Exception is thrown when array out of bounds when fetching from object")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode([
                 "hostname": new ArrayNode(["google.com", "dlang.org"])
             ])
         );
 
-        assertThrown!ConfigReadException(dictionary.get("hostname.[5]"));
+        assertThrown!ConfigReadException(config.get("hostname.[5]"));
     }
 
     @("Exception is thrown when path does not exist")
     unittest {
-        auto dictionary = new ConfigDictionary(new ObjectNode(
+        auto config = new ConfigDictionary(new ObjectNode(
                 [
                     "hostname": new ObjectNode(["cluster": new ValueNode("")])
                 ])
         );
 
-        assertThrown!ConfigReadException(dictionary.get("hostname.cluster.spacey"));
+        assertThrown!ConfigReadException(config.get("hostname.cluster.spacey"));
     }
 
     @("Exception is thrown when given path terminates too early")
     unittest {
-        auto dictionary = new ConfigDictionary(new ObjectNode(
+        auto config = new ConfigDictionary(new ObjectNode(
                 [
                     "hostname": new ObjectNode(["cluster": new ValueNode(null)])
                 ])
         );
 
-        assertThrown!ConfigReadException(dictionary.get("hostname"));
+        assertThrown!ConfigReadException(config.get("hostname"));
     }
 
     @("Exception is thrown when given path does not exist because config is an array")
     unittest {
-        auto dictionary = new ConfigDictionary(new ArrayNode());
+        auto config = new ConfigDictionary(new ArrayNode());
 
-        assertThrown!ConfigReadException(dictionary.get("hostname"));
+        assertThrown!ConfigReadException(config.get("hostname"));
     }
 
     @("Get value from objects in array")
     unittest {
-        auto dictionary = new ConfigDictionary(new ArrayNode(
+        auto config = new ConfigDictionary(new ArrayNode(
                 new ObjectNode(["wrong": "yes"]),
                 new ObjectNode(["wrong": "no"]),
                 new ObjectNode(["wrong": "very"]),
         ));
 
-        assert(dictionary.get("[1].wrong") == "no");
+        assert(config.get("[1].wrong") == "no");
     }
 
     @("Get value from config with mixed types")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode([
                 "uno": cast(ConfigNode) new ValueNode("one"),
                 "dos": cast(ConfigNode) new ArrayNode(["nope", "two"]),
@@ -532,26 +532,26 @@ version (unittest) {
             ])
         );
 
-        assert(dictionary.get("uno") == "one");
-        assert(dictionary.get("dos.[1]") == "two");
-        assert(dictionary.get("tres.thisone") == "three");
+        assert(config.get("uno") == "one");
+        assert(config.get("dos.[1]") == "two");
+        assert(config.get("tres.thisone") == "three");
     }
 
     @("Ignore empty segments")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode(
                 [
                 "one": new ObjectNode(["two": new ObjectNode(["three": "four"])])
             ])
         );
 
-        assert(dictionary.get(".one..two...three....") == "four");
+        assert(config.get(".one..two...three....") == "four");
     }
 
     @("Support conventional array indexing notation")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode(
                 [
                     "one": new ObjectNode([
@@ -560,12 +560,12 @@ version (unittest) {
                 ])
         );
 
-        assert(dictionary.get("one.two[1]") == "mino");
+        assert(config.get("one.two[1]") == "mino");
     }
 
     @("Get and convert values")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode([
                 "uno": new ValueNode("1223"),
                 "dos": new ValueNode("true"),
@@ -574,15 +574,15 @@ version (unittest) {
             ])
         );
 
-        assert(dictionary.get!int("uno") == 1223);
-        assert(dictionary.get!bool("dos") == true);
-        assert(dictionary.get!string("tres") == "Hi you");
-        assert(isClose(dictionary.get!float("quatro"), 1.3));
+        assert(config.get!int("uno") == 1223);
+        assert(config.get!bool("dos") == true);
+        assert(config.get!string("tres") == "Hi you");
+        assert(isClose(config.get!float("quatro"), 1.3));
     }
 
     @("Get config from array")
     unittest {
-        auto dictionaryOne = new ConfigDictionary(new ObjectNode(
+        auto configOne = new ConfigDictionary(new ObjectNode(
                 [
                 "servers": new ArrayNode([
                     new ObjectNode(["hostname": "lala.com"]),
@@ -591,16 +591,16 @@ version (unittest) {
             ])
         );
 
-        auto config = dictionaryOne.getConfig("servers[0]");
+        auto config = configOne.getConfig("servers[0]");
         assert(config.get("hostname") == "lala.com");
     }
 
     @("Trim spaces in path segments")
     unittest {
-        auto dictionary = new ConfigDictionary(
+        auto config = new ConfigDictionary(
             new ObjectNode(["que": new ObjectNode(["pasa hombre": "not much"])])
         );
 
-        assert(dictionary.get("  que.    pasa hombre   ") == "not much");
+        assert(config.get("  que.    pasa hombre   ") == "not much");
     }
 }
