@@ -224,7 +224,12 @@ private class ConfigPath {
 /** 
  * Used in a ConfigDictionary to enable to disable environment variable substitution.
  */
-alias SubstituteEnvironmentVariables = Flag!"substituteEnvironmentVariables";
+alias SubstituteEnvironmentVariables = Flag!"SubstituteEnvironmentVariables";
+
+/** 
+ * Used in a ConfigDictionary to enable to disable config path substitution.
+ */
+alias SubstituteConfigVariables = Flag!"SubstituteConfigVariables";
 
 /** 
  * A ConfigDictionary contains the configuration tree and facilities to get values from that tree.
@@ -233,16 +238,20 @@ class ConfigDictionary {
     ConfigNode rootNode;
     SubstituteEnvironmentVariables substituteEnvironmentVariables = SubstituteEnvironmentVariables
         .yes;
+    SubstituteConfigVariables substituteConfigVariables = SubstituteConfigVariables.yes;
 
     this(SubstituteEnvironmentVariables substituteEnvironmentVariables = SubstituteEnvironmentVariables
+            .yes, SubstituteConfigVariables substituteConfigVariables = SubstituteConfigVariables
             .yes) {
         this.substituteEnvironmentVariables = substituteEnvironmentVariables;
+        this.substituteConfigVariables = substituteConfigVariables;
     }
 
     this(ConfigNode rootNode, SubstituteEnvironmentVariables substituteEnvironmentVariables = SubstituteEnvironmentVariables
+            .yes, SubstituteConfigVariables substituteConfigVariables = SubstituteConfigVariables
             .yes) {
+        this(substituteEnvironmentVariables, substituteConfigVariables);
         this.rootNode = rootNode;
-        this.substituteEnvironmentVariables = substituteEnvironmentVariables;
     }
 
     /** 
@@ -268,7 +277,11 @@ class ConfigDictionary {
             auto node = getNodeAt(path);
             auto value = cast(ValueNode) node;
             if (value) {
-                return substituteEnvironmentVariables ? substituteEnvVars(value) : value.value;
+                if (substituteEnvironmentVariables || substituteConfigVariables) {
+                    return substituteVariables(value);
+                } else {
+                    return value.value;
+                }
             } else {
                 throw new ConfigReadException(
                     "Value expected but " ~ node.nodeType ~ " found at path: " ~ createExceptionPath(
@@ -409,7 +422,7 @@ class ConfigDictionary {
         return currentNode;
     }
 
-    private string substituteEnvVars(ValueNode valueNode) {
+    private string substituteVariables(ValueNode valueNode) {
         auto value = valueNode.value;
         if (value == null) {
             return value;
@@ -418,21 +431,38 @@ class ConfigDictionary {
         auto result = "";
         auto isParsingEnvVar = false;
         auto isParsingDefault = false;
-        auto envVarName = "";
-        auto defaultEnvVarValue = "";
+        auto varName = "";
+        auto defaultVarValue = "";
 
-        void addEnvVarToResult() {
-            auto envVarValue = environment.get(envVarName);
-            if (envVarValue !is null) {
-                result ~= envVarValue;
-            } else {
-                if (defaultEnvVarValue.length == 0) {
-                    throw new ConfigReadException(
-                        "Environment variable not found: " ~ envVarName);
+        void addVarValueToResult() {
+            string[] exceptionMessageParts;
+
+            if (substituteEnvironmentVariables) {
+                exceptionMessageParts ~= "environment variable";
+                auto envVarValue = environment.get(varName);
+                if (envVarValue !is null) {
+                    result ~= envVarValue;
+                    return;
                 }
-
-                result ~= defaultEnvVarValue;
             }
+
+            if (substituteConfigVariables) {
+                exceptionMessageParts ~= "config path";
+                auto configValue = get(varName, defaultVarValue);
+                if (configValue.length > 0) {
+                    result ~= configValue;
+                    return;
+                }
+            }
+
+            if (defaultVarValue.length > 0) {
+                result ~= defaultVarValue;
+                return;
+            }
+
+            auto exceptionMessageComponents = exceptionMessageParts.join(" or ");
+            throw new ConfigReadException(
+                "No substitution found for " ~ exceptionMessageComponents ~ ": " ~ varName);
         }
 
         foreach (size_t i, char c; value) {
@@ -449,14 +479,14 @@ class ConfigDictionary {
                 if (c == '}') {
                     isParsingEnvVar = false;
                     isParsingDefault = false;
-                    addEnvVarToResult();
-                    envVarName = "";
-                    defaultEnvVarValue = "";
+                    addVarValueToResult();
+                    varName = "";
+                    defaultVarValue = "";
                     continue;
                 }
 
                 if (isParsingDefault) {
-                    defaultEnvVarValue ~= c;
+                    defaultVarValue ~= c;
                     continue;
                 }
 
@@ -465,15 +495,15 @@ class ConfigDictionary {
                     continue;
                 }
 
-                envVarName ~= c;
+                varName ~= c;
                 continue;
             }
 
             result ~= c;
         }
 
-        if (envVarName.length > 0) {
-            addEnvVarToResult();
+        if (varName.length > 0) {
+            addVarValueToResult();
         }
 
         return result;
@@ -794,15 +824,17 @@ version (unittest) {
                     "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!}"),
                 "megaMix": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR_TWO} ${MIRAGE_CONFIG_TEST_ENV_VAR} ${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:go}!"),
                 "typical": new ValueNode("${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}"),
-            ])
+            ]),
+        SubstituteEnvironmentVariables.yes,
+        SubstituteConfigVariables.no
         );
 
         assert(config.get("withBrackets") == "is set!");
         assert(config.get("withoutBrackets") == "is set!");
         assert(config.get("withWhiteSpace") == "        is set!         ");
         assert(config.get("alsoWithWhiteSpace") == "    is set!");
-        assertThrown!Exception(config.get("tooMuchWhiteSpace")); // Environment variable not found (whitespace is included in env name)
-        assertThrown!Exception(config.get("notSet")); // Environment variable not found
+        assertThrown!ConfigReadException(config.get("tooMuchWhiteSpace")); // Environment variable not found (whitespace is included in env name)
+        assertThrown!ConfigReadException(config.get("notSet")); // Environment variable not found
         assert(config.get("withDefault") == "use default!");
         assert(config.get("withDefaultAndBrackets") == "use default!");
         assert(config.get("megaMix") == "is ready! is set! go!");
@@ -829,7 +861,8 @@ version (unittest) {
                 "megaMix": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR_TWO} ${MIRAGE_CONFIG_TEST_ENV_VAR} ${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:go}!"),
                 "typical": new ValueNode("${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}"),
             ]),
-        SubstituteEnvironmentVariables.no
+        SubstituteEnvironmentVariables.no,
+        SubstituteConfigVariables.no
         );
 
         assert(config.get("withBrackets") == "${MIRAGE_CONFIG_TEST_ENV_VAR}");
@@ -851,6 +884,59 @@ version (unittest) {
         auto config = new ConfigDictionary();
         assert(config.get("la.la.la", "not there") == "not there");
         assert(config.get!int("do.re.mi.fa.so", 42) == 42);
+    }
+
+    @("Substitute values from other config paths")
+    unittest {
+        auto config = new ConfigDictionary(
+            new ObjectNode([
+                "greet": cast(ConfigNode) new ObjectNode([
+                        "env": "Hi"
+                    ]),
+                "hi": cast(ConfigNode) new ValueNode("${greet.env} there!"),
+                "oi": cast(ConfigNode) new ValueNode("${path.does.not.exist}"),
+            ]),
+        SubstituteEnvironmentVariables.no,
+        SubstituteConfigVariables.yes
+        );
+
+        assert(config.get("hi") == "Hi there!");
+        assertThrown!ConfigReadException(config.get("oi"));
+    }
+
+    @("Do not substitute values from other config paths when disabled")
+    unittest {
+        auto config = new ConfigDictionary(
+            new ObjectNode([
+                "greet": cast(ConfigNode) new ObjectNode([
+                        "env": "Hi"
+                    ]),
+                "hi": cast(ConfigNode) new ValueNode("${greet.env} there!"),
+                "oi": cast(ConfigNode) new ValueNode("${path.does.not.exist}"),
+            ]),
+        SubstituteEnvironmentVariables.no,
+        SubstituteConfigVariables.no
+        );
+
+        assert(config.get("greet.env") == "Hi");
+        assert(config.get("hi") == "${greet.env} there!");
+        assert(config.get("oi") == "${path.does.not.exist}");
+    }
+
+    @("substitute values from both environment variables and config paths")
+    unittest {
+        environment["MIRAGE_CONFIG_TEST_ENV_VAR_THREE"] = "punch";
+
+        auto config = new ConfigDictionary(
+            new ObjectNode([
+                "one": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR_THREE}"),
+                "two": new ValueNode("${one}"),
+            ]),
+        SubstituteEnvironmentVariables.yes,
+        SubstituteConfigVariables.yes
+        );
+
+        assert(config.get("two") == "punch");
     }
 
     //TODO: Test null nodes should gracefully fail
