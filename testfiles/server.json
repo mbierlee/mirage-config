@@ -1,0 +1,7 @@
+{
+  "server": {
+    "host": "$MIRAGE_TEST_HOSTNAME",
+    "port": "${MIRAGE_TEST_PORT:8118}"
+  },
+  "app": "${MIRAGE_TEST_APP_NAME} server - built with love"
+}

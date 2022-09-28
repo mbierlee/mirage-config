@@ -130,6 +130,8 @@ ConfigDictionary loadJsonConfig(const string filePath) {
 }
 
 version (unittest) {
+    import std.process : environment;
+
     @("Parse JSON")
     unittest {
         JSONValue serverJson = ["hostname": "hosty.com", "port": "1234"];
@@ -192,5 +194,18 @@ version (unittest) {
         assert(config.get("traits[1]") == "tree");
         assert(config.get("age") == "8728");
         assert(config.get("taxNumber") == null);
+    }
+
+    @("Substitute env vars in JSON")
+    unittest {
+        environment["MIRAGE_TEST_APP_NAME"] = "Unittest";
+        environment["MIRAGE_TEST_HOSTNAME"] = "wonkeyhost";
+        environment.remove("MIRAGE_TEST_PORT");
+
+        auto config = loadJsonConfig("testfiles/server.json");
+
+        assert(config.get("server.host") == "wonkeyhost");
+        assert(config.get("server.port") == "8118");
+        assert(config.get("app") == "Unittest server - built with love");
     }
 }
