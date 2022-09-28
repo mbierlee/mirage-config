@@ -16,8 +16,9 @@ void main() {
     // This example shows how values in configuration can be substituted from
     // environment variables or other configuration paths.
 
-    environment["subject"] = "world";
+    environment["CONFIG_EXAMPLE_SUBJECT"] = "world";
     auto config = loadJsonConfig("config.json");
 
-    writeln(config.get("greeting"));
+    writeln(config.get("start")); // "Hello world! Enjoy your day!"
+    writeln(config.get("end"));   // "Bye!"
 }

@@ -4,5 +4,6 @@
     "subject": "$CONFIG_EXAMPLE_SUBJECT",
     "followUp": "${CONFIG_EXAMPLE_FOLLOW_UP:Enjoy your day!}"
   },
-  "greeting": "${parameters.greeting} ${parameters.subject}! ${parameters.followUp}"
+  "start": "${parameters.greeting} ${parameters.subject}! ${parameters.followUp}",
+  "end": "${parameters.farewell:Bye!}"
 }
