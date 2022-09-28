@@ -698,7 +698,14 @@ version (unittest) {
         assert(jsonConfig.get("taxNumber") == null);
     }
 
-    // TODO test whitespace is preserved in value
+    @("Whitespace is preserved in values")
+    unittest {
+        auto config = new ConfigDictionary(new ObjectNode([
+                "bla": "       blergh       "
+            ]));
+
+        assert(config.get("bla") == "       blergh       ");
+    }
 
     @("Read value from environment variable")
     unittest {
