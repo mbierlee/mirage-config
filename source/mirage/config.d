@@ -17,6 +17,7 @@ import std.conv : to, ConvException;
 import std.file : readText;
 import std.path : extension;
 import std.process : environment;
+import std.typecons : Flag;
 
 import mirage.json : loadJsonConfig;
 
@@ -212,16 +213,27 @@ private class ConfigPath {
 }
 
 /** 
+ * Used in a ConfigDictionary to enable to disable environment variable substitution.
+ */
+alias SubstituteEnvironmentVariables = Flag!"substituteEnvironmentVariables";
+
+/** 
  * A ConfigDictionary contains the configuration tree and facilities to get values from that tree.
  */
 class ConfigDictionary {
     ConfigNode rootNode;
+    SubstituteEnvironmentVariables substituteEnvironmentVariables = SubstituteEnvironmentVariables
+        .yes;
 
-    this() {
+    this(SubstituteEnvironmentVariables substituteEnvironmentVariables = SubstituteEnvironmentVariables
+            .yes) {
+        this.substituteEnvironmentVariables = substituteEnvironmentVariables;
     }
 
-    this(ConfigNode rootNode) {
+    this(ConfigNode rootNode, SubstituteEnvironmentVariables substituteEnvironmentVariables = SubstituteEnvironmentVariables
+            .yes) {
         this.rootNode = rootNode;
+        this.substituteEnvironmentVariables = substituteEnvironmentVariables;
     }
 
     /** 
@@ -242,7 +254,7 @@ class ConfigDictionary {
         auto node = getNodeAt(path);
         auto value = cast(ValueNode) node;
         if (value) {
-            return substituteEnvVars(value);
+            return substituteEnvironmentVariables ? substituteEnvVars(value) : value.value;
         } else {
             throw new ConfigReadException(
                 "Value expected but " ~ node.nodeType ~ " found at path: " ~ createExceptionPath(
@@ -745,5 +757,40 @@ version (unittest) {
         assert(config.get("withDefaultAndBrackets") == "use default!");
         assert(config.get("megaMix") == "is ready! is set! go!");
         assert(config.get("typical") == "localhost:8080");
+    }
+
+    @("Don't read value from environment variables when disabled")
+    unittest {
+        environment.remove("MIRAGE_CONFIG_TEST_ENV_VAR");
+        environment.remove("MIRAGE_CONFIG_TEST_ENV_VAR_TWO");
+
+        auto config = new ConfigDictionary(
+            new ObjectNode(
+                [
+                "withBrackets": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR}"),
+                "withoutBrackets": new ValueNode("$MIRAGE_CONFIG_TEST_ENV_VAR"),
+                "withWhiteSpace": new ValueNode("        ${MIRAGE_CONFIG_TEST_ENV_VAR}         "),
+                "alsoWithWhiteSpace": new ValueNode("    $MIRAGE_CONFIG_TEST_ENV_VAR"),
+                "tooMuchWhiteSpace": new ValueNode("$MIRAGE_CONFIG_TEST_ENV_VAR      "),
+                "notSet": new ValueNode("${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR}"),
+                "withDefault": new ValueNode("$MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!"),
+                "withDefaultAndBrackets": new ValueNode(
+                    "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!}"),
+                "megaMix": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR_TWO} ${MIRAGE_CONFIG_TEST_ENV_VAR} ${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:go}!"),
+                "typical": new ValueNode("${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}"),
+            ]),
+        SubstituteEnvironmentVariables.no
+        );
+
+        assert(config.get("withBrackets") == "${MIRAGE_CONFIG_TEST_ENV_VAR}");
+        assert(config.get("withoutBrackets") == "$MIRAGE_CONFIG_TEST_ENV_VAR");
+        assert(config.get("withWhiteSpace") == "        ${MIRAGE_CONFIG_TEST_ENV_VAR}         ");
+        assert(config.get("alsoWithWhiteSpace") == "    $MIRAGE_CONFIG_TEST_ENV_VAR");
+        assert(config.get("tooMuchWhiteSpace") == "$MIRAGE_CONFIG_TEST_ENV_VAR      ");
+        assert(config.get("notSet") == "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR}");
+        assert(config.get("withDefault") == "$MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!");
+        assert(config.get("withDefaultAndBrackets") == "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!}");
+        assert(config.get("megaMix") == "${MIRAGE_CONFIG_TEST_ENV_VAR_TWO} ${MIRAGE_CONFIG_TEST_ENV_VAR} ${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:go}!");
+        assert(config.get("typical") == "${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}");
     }
 }
