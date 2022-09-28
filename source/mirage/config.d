@@ -31,6 +31,15 @@ class ConfigReadException : Exception {
 }
 
 /** 
+ * Used by ConfigDictionary when the supplied path does not exist.
+ */
+class ConfigPathNotFoundException : Exception {
+    this(string msg, string file = __FILE__, size_t line = __LINE__) {
+        super(msg, file, line);
+    }
+}
+
+/** 
  * Used by ConfigFactory instances when loading or parsing configuration fails.
  */
 class ConfigCreationException : Exception {
@@ -246,19 +255,31 @@ class ConfigDictionary {
      *                Although the path should be universally the same over all types of config files, some might not lend to this structure,
      *                and have a more specific way of retrieving data from the config. See the examples and specific config factories for
      *                more details.
+     *   defaultValue = (Optional) Value to return when the given configPath is invalid. When not supplied a ConfigPathNotFoundException exception is thrown.
+     *
+     * Throws: ConfigReadException when something goes wrong reading the config. 
+     *         ConfigPathNotFoundException when the given path does not exist in the config.
      *
      * Returns: The value at the path in the configuration. To convert it use get!T().
      */
-    string get(string configPath) {
-        auto path = new ConfigPath(configPath);
-        auto node = getNodeAt(path);
-        auto value = cast(ValueNode) node;
-        if (value) {
-            return substituteEnvironmentVariables ? substituteEnvVars(value) : value.value;
-        } else {
-            throw new ConfigReadException(
-                "Value expected but " ~ node.nodeType ~ " found at path: " ~ createExceptionPath(
-                    path));
+    string get(string configPath, string defaultValue = null) {
+        try {
+            auto path = new ConfigPath(configPath);
+            auto node = getNodeAt(path);
+            auto value = cast(ValueNode) node;
+            if (value) {
+                return substituteEnvironmentVariables ? substituteEnvVars(value) : value.value;
+            } else {
+                throw new ConfigReadException(
+                    "Value expected but " ~ node.nodeType ~ " found at path: " ~ createExceptionPath(
+                        path));
+            }
+        } catch (ConfigPathNotFoundException e) {
+            if (defaultValue !is null) {
+                return defaultValue;
+            }
+
+            throw e;
         }
     }
 
@@ -266,11 +287,37 @@ class ConfigDictionary {
      * Get values from the configuration and attempts to convert them to the specified type.
      *
      * Params:
-     *   configPath = Path to the wanted config value. See get(). 
+     *   configPath = Path to the wanted config value. See get().
+     *
+     * Throws: ConfigReadException when something goes wrong reading the config. 
+     *         ConfigPathNotFoundException when the given path does not exist in the config.
+     *
      * Returns: The value at the path in the configuration.
+     * See_Also: get
      */
     ConvertToType get(ConvertToType)(string configPath) {
         return get(configPath).to!ConvertToType;
+    }
+
+    /** 
+     * Get values from the configuration and attempts to convert them to the specified type.
+     *
+     * Params:
+     *   configPath = Path to the wanted config value. See get().
+     *   defaultValue = (Optional) Value to return when the given configPath is invalid. When not supplied a ConfigPathNotFoundException exception is thrown.
+     *
+     * Throws: ConfigReadException when something goes wrong reading the config. 
+     *         ConfigPathNotFoundException when the given path does not exist in the config.
+     *
+     * Returns: The value at the path in the configuration.
+     * See_Also: get
+     */
+    ConvertToType get(ConvertToType)(string configPath, ConvertToType defaultValue) {
+        try {
+            return get(configPath).to!ConvertToType;
+        } catch (ConfigPathNotFoundException e) {
+            return defaultValue;
+        }
     }
 
     /** 
@@ -294,20 +341,23 @@ class ConfigDictionary {
     }
 
     private ConfigNode getNodeAt(ConfigPath path) {
-        enforce!ConfigReadException(rootNode !is null, "The config is empty");
+        void throwPathNotFound() {
+            throw new ConfigPathNotFoundException(
+                "Path does not exist: " ~ createExceptionPath(path));
+        }
+
+        if (rootNode is null) {
+            throwPathNotFound();
+        }
 
         auto currentNode = rootNode;
         PathSegment currentPathSegment = path.getNextSegment();
-
-        void throwPathNotExists() {
-            throw new ConfigReadException("Path does not exist: " ~ createExceptionPath(path));
-        }
 
         void ifNotNullPointer(void* obj, void delegate() fn) {
             if (obj) {
                 fn();
             } else {
-                throwPathNotExists();
+                throwPathNotFound();
             }
         }
 
@@ -315,18 +365,18 @@ class ConfigDictionary {
             if (obj) {
                 fn();
             } else {
-                throwPathNotExists();
+                throwPathNotFound();
             }
         }
 
         while (currentPathSegment !is null) {
             if (currentNode is null) {
-                throwPathNotExists();
+                throwPathNotFound();
             }
 
             auto valueNode = cast(ValueNode) currentNode;
             if (valueNode) {
-                throwPathNotExists();
+                throwPathNotFound();
             }
 
             auto arrayPath = cast(ArrayPathSegment) currentPathSegment;
@@ -485,7 +535,7 @@ version (unittest) {
     unittest {
         auto config = new ConfigDictionary();
 
-        assertThrown!ConfigReadException(config.get("."));
+        assertThrown!ConfigPathNotFoundException(config.get("."));
     }
 
     @("Get value in root with empty path")
@@ -586,7 +636,7 @@ version (unittest) {
                 ])
         );
 
-        assertThrown!ConfigReadException(config.get("hostname.cluster.spacey"));
+        assertThrown!ConfigPathNotFoundException(config.get("hostname.cluster.spacey"));
     }
 
     @("Exception is thrown when given path terminates too early")
@@ -604,7 +654,7 @@ version (unittest) {
     unittest {
         auto config = new ConfigDictionary(new ArrayNode());
 
-        assertThrown!ConfigReadException(config.get("hostname"));
+        assertThrown!ConfigPathNotFoundException(config.get("hostname"));
     }
 
     @("Get value from objects in array")
@@ -789,8 +839,19 @@ version (unittest) {
         assert(config.get("tooMuchWhiteSpace") == "$MIRAGE_CONFIG_TEST_ENV_VAR      ");
         assert(config.get("notSet") == "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR}");
         assert(config.get("withDefault") == "$MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!");
-        assert(config.get("withDefaultAndBrackets") == "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!}");
+        assert(config.get(
+                "withDefaultAndBrackets") == "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!}");
         assert(config.get("megaMix") == "${MIRAGE_CONFIG_TEST_ENV_VAR_TWO} ${MIRAGE_CONFIG_TEST_ENV_VAR} ${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:go}!");
-        assert(config.get("typical") == "${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}");
+        assert(config.get(
+                "typical") == "${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}");
     }
+
+    @("Get with default should return default")
+    unittest {
+        auto config = new ConfigDictionary();
+        assert(config.get("la.la.la", "not there") == "not there");
+        assert(config.get!int("do.re.mi.fa.so", 42) == 42);
+    }
+
+    //TODO: Test null nodes should gracefully fail
 }
