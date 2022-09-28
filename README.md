@@ -13,3 +13,9 @@ Features:
 - Parse configuration from string or JSONValue instead of from disk.
 
 This is a work in progress. More will follow. For now see `examples/` to learn how to use it.
+
+TODO: add tutorial on:
+- Config loading
+- Config parsing
+- Env and config var substitution
+-- Escaping
