@@ -350,7 +350,7 @@ class ConfigDictionary {
     private string substituteEnvVars(ValueNode valueNode) {
         auto value = valueNode.value;
         if (value == null) {
-            return value; //todo test
+            return value;
         }
 
         auto result = "";
@@ -705,6 +705,12 @@ version (unittest) {
             ]));
 
         assert(config.get("bla") == "       blergh       ");
+    }
+
+    @("Null value stays null, not string")
+    unittest {
+        auto config = new ConfigDictionary(new ValueNode(null));
+        assert(config.get(".") == null);
     }
 
     @("Read value from environment variable")
