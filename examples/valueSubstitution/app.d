@@ -13,7 +13,7 @@ import std.stdio : writeln;
 import std.process : environment;
 
 void main() {
-    // This example shows how values in configuration can be substituted from
+    // This example shows how values in configuration can be substituted with
     // environment variables or other configuration paths.
 
     environment["CONFIG_EXAMPLE_SUBJECT"] = "world";
