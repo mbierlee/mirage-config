@@ -431,10 +431,15 @@ class ConfigDictionary {
         auto result = "";
         auto isParsingEnvVar = false;
         auto isParsingDefault = false;
+        auto escapeNextCharacter = false;
         auto varName = "";
         auto defaultVarValue = "";
 
         void addVarValueToResult() {
+            if (varName.length == 0) {
+                return;
+            }
+
             string[] exceptionMessageParts;
 
             if (substituteEnvironmentVariables) {
@@ -466,6 +471,17 @@ class ConfigDictionary {
         }
 
         foreach (size_t i, char c; value) {
+            if (escapeNextCharacter) {
+                result ~= c;
+                escapeNextCharacter = false;
+                continue;
+            }
+
+            if (c == '\\' && value.length.to!int - 1 > i && value[i + 1] == '$') {
+                escapeNextCharacter = true;
+                continue;
+            }
+
             if (c == '$') {
                 isParsingEnvVar = true;
                 continue;
@@ -502,8 +518,12 @@ class ConfigDictionary {
             result ~= c;
         }
 
-        if (varName.length > 0) {
-            addVarValueToResult();
+        if (isParsingEnvVar) {
+            if (varName.length > 0) {
+                addVarValueToResult();
+            } else {
+                result ~= '$';
+            }
         }
 
         return result;
@@ -937,6 +957,39 @@ version (unittest) {
         );
 
         assert(config.get("two") == "punch");
+    }
+
+    @("Escaping avoids variable substitution")
+    unittest {
+        auto config = new ConfigDictionary(new ObjectNode([
+                "only dollar": "\\$ESCAPE_WITH_MY_LIFE",
+                "with brackets": "\\${YOU WON'T GET ME}",
+            ])
+        );
+        assert(config.get("only dollar") == "$ESCAPE_WITH_MY_LIFE");
+        assert(config.get("with brackets") == "${YOU WON'T GET ME}");
+    }
+
+    @("Wonky values")
+    unittest {
+        auto config = new ConfigDictionary(new ObjectNode([
+                "just a dollar": "$",
+                "final escape": "\\",
+                "escape with money": "\\$",
+                "brackets": "{}",
+                "empty bracket money": "${}",
+                "smackers": "$$$$$",
+                "weird bash escape thingy": "$$",
+                "escape room": "\\\\"
+            ]));
+
+        assert(config.get("just a dollar") == "$");
+        assert(config.get("final escape") == "\\");
+        assert(config.get("escape with money") == "$");
+        assert(config.get("brackets") == "{}");
+        assert(config.get("empty bracket money") == "");
+        assert(config.get("smackers") == "$");
+        assert(config.get("escape room") == "\\\\");
     }
 
     //TODO: Test null nodes should gracefully fail
