@@ -15,3 +15,6 @@ run-examples: run-jsonExample
 
 run-jsonExample:
 	dub run --build=release --config=jsonExample
+
+run-valueSubstitutionExample:
+	dub run --build=release --config=valueSubstitutionExample

@@ -25,6 +25,17 @@
       "copyFiles": ["examples/json/config.json"],
       "targetPath": "bin/examples/json",
       "workingDirectory": "bin/examples/json"
+    },
+    {
+      "name": "valueSubstitutionExample",
+      "targetType": "executable",
+      "description": "Example of how to use environment and config substitution.",
+      "targetName": "valueSubstitutionExample",
+      "sourcePaths": ["examples/valueSubstitution"],
+      "importPaths": ["source"],
+      "copyFiles": ["examples/valueSubstitution/config.json"],
+      "targetPath": "bin/examples/valueSubstitution",
+      "workingDirectory": "bin/examples/valueSubstitution"
     }
   ]
 }
