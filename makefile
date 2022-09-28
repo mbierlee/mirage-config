@@ -11,7 +11,8 @@ test:
 clean:
 	dub clean
 
-run-examples: run-jsonExample
+run-examples: run-jsonExample \
+	run-valueSubstitutionExample
 
 run-jsonExample:
 	dub run --build=release --config=jsonExample
