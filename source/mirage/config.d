@@ -436,6 +436,8 @@ class ConfigDictionary {
         auto defaultVarValue = "";
 
         void addVarValueToResult() {
+            varName = varName.strip;
+
             if (varName.length == 0) {
                 return;
             }
@@ -460,8 +462,8 @@ class ConfigDictionary {
                 }
             }
 
-            if (defaultVarValue.length > 0) {
-                result ~= defaultVarValue;
+            if (isParsingDefault) {
+                result ~= defaultVarValue.strip;
                 return;
             }
 
@@ -493,9 +495,9 @@ class ConfigDictionary {
                 }
 
                 if (c == '}') {
+                    addVarValueToResult();
                     isParsingEnvVar = false;
                     isParsingDefault = false;
-                    addVarValueToResult();
                     varName = "";
                     defaultVarValue = "";
                     continue;
@@ -837,13 +839,18 @@ version (unittest) {
                 "withoutBrackets": new ValueNode("$MIRAGE_CONFIG_TEST_ENV_VAR"),
                 "withWhiteSpace": new ValueNode("        ${MIRAGE_CONFIG_TEST_ENV_VAR}         "),
                 "alsoWithWhiteSpace": new ValueNode("    $MIRAGE_CONFIG_TEST_ENV_VAR"),
-                "tooMuchWhiteSpace": new ValueNode("$MIRAGE_CONFIG_TEST_ENV_VAR      "),
+                "whitespaceAtEnd": new ValueNode("$MIRAGE_CONFIG_TEST_ENV_VAR      "),
                 "notSet": new ValueNode("${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR}"),
+                "alsoNotSet": new ValueNode("$MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR"),
                 "withDefault": new ValueNode("$MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!"),
                 "withDefaultAndBrackets": new ValueNode(
                     "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!}"),
                 "megaMix": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR_TWO} ${MIRAGE_CONFIG_TEST_ENV_VAR} ${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:go}!"),
                 "typical": new ValueNode("${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}"),
+                "whitespaceInVar": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR   }"),
+                "whitespaceInDefault": new ValueNode("${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:   bruh}"),
+                "emptyDefault": new ValueNode("${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:}"),
+                "emptyDefaultWhiteSpace": new ValueNode("${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:    }"),
             ]),
         SubstituteEnvironmentVariables.yes,
         SubstituteConfigVariables.no
@@ -853,12 +860,17 @@ version (unittest) {
         assert(config.get("withoutBrackets") == "is set!");
         assert(config.get("withWhiteSpace") == "        is set!         ");
         assert(config.get("alsoWithWhiteSpace") == "    is set!");
-        assertThrown!ConfigReadException(config.get("tooMuchWhiteSpace")); // Environment variable not found (whitespace is included in env name)
+        assert(config.get("whitespaceAtEnd") == "is set!");
         assertThrown!ConfigReadException(config.get("notSet")); // Environment variable not found
+        assertThrown!ConfigReadException(config.get("alsoNotSet")); // Environment variable not found
         assert(config.get("withDefault") == "use default!");
         assert(config.get("withDefaultAndBrackets") == "use default!");
         assert(config.get("megaMix") == "is ready! is set! go!");
         assert(config.get("typical") == "localhost:8080");
+        assert(config.get("whitespaceInVar") == "is set!");
+        assert(config.get("whitespaceInDefault") == "bruh");
+        assert(config.get("emptyDefault") == "");
+        assert(config.get("emptyDefaultWhiteSpace") == "");
     }
 
     @("Don't read value from environment variables when disabled")
