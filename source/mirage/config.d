@@ -16,6 +16,7 @@ import std.string : split, startsWith, endsWith, join, lastIndexOf, strip, toLow
 import std.conv : to, ConvException;
 import std.file : readText;
 import std.path : extension;
+import std.process : environment;
 
 import mirage.json : loadJsonConfig;
 
@@ -241,7 +242,7 @@ class ConfigDictionary {
         auto node = getNodeAt(path);
         auto value = cast(ValueNode) node;
         if (value) {
-            return value.value;
+            return substituteEnvVars(value);
         } else {
             throw new ConfigReadException(
                 "Value expected but " ~ node.nodeType ~ " found at path: " ~ createExceptionPath(
@@ -344,6 +345,76 @@ class ConfigDictionary {
         }
 
         return currentNode;
+    }
+
+    private string substituteEnvVars(ValueNode valueNode) {
+        auto value = valueNode.value;
+        if (value == null) {
+            return value; //todo test
+        }
+
+        auto result = "";
+        auto isParsingEnvVar = false;
+        auto isParsingDefault = false;
+        auto envVarName = "";
+        auto defaultEnvVarValue = "";
+
+        void addEnvVarToResult() {
+            auto envVarValue = environment.get(envVarName);
+            if (envVarValue !is null) {
+                result ~= envVarValue;
+            } else {
+                if (defaultEnvVarValue.length == 0) {
+                    throw new ConfigReadException(
+                        "Environment variable not found: " ~ envVarName);
+                }
+
+                result ~= defaultEnvVarValue;
+            }
+        }
+
+        foreach (size_t i, char c; value) {
+            if (c == '$') {
+                isParsingEnvVar = true;
+                continue;
+            }
+
+            if (isParsingEnvVar) {
+                if (c == '{') {
+                    continue;
+                }
+
+                if (c == '}') {
+                    isParsingEnvVar = false;
+                    isParsingDefault = false;
+                    addEnvVarToResult();
+                    envVarName = "";
+                    defaultEnvVarValue = "";
+                    continue;
+                }
+
+                if (isParsingDefault) {
+                    defaultEnvVarValue ~= c;
+                    continue;
+                }
+
+                if (c == ':') {
+                    isParsingDefault = true;
+                    continue;
+                }
+
+                envVarName ~= c;
+                continue;
+            }
+
+            result ~= c;
+        }
+
+        if (envVarName.length > 0) {
+            addEnvVarToResult();
+        }
+
+        return result;
     }
 }
 
@@ -625,5 +696,41 @@ version (unittest) {
         assert(jsonConfig.get("traits[1]") == "tree");
         assert(jsonConfig.get("age") == "8728");
         assert(jsonConfig.get("taxNumber") == null);
+    }
+
+    // TODO test whitespace is preserved in value
+
+    @("Read value from environment variable")
+    unittest {
+        environment["MIRAGE_CONFIG_TEST_ENV_VAR"] = "is set!";
+        environment["MIRAGE_CONFIG_TEST_ENV_VAR_TWO"] = "is ready!";
+
+        auto config = new ConfigDictionary(
+            new ObjectNode(
+                [
+                "withBrackets": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR}"),
+                "withoutBrackets": new ValueNode("$MIRAGE_CONFIG_TEST_ENV_VAR"),
+                "withWhiteSpace": new ValueNode("        ${MIRAGE_CONFIG_TEST_ENV_VAR}         "),
+                "alsoWithWhiteSpace": new ValueNode("    $MIRAGE_CONFIG_TEST_ENV_VAR"),
+                "tooMuchWhiteSpace": new ValueNode("$MIRAGE_CONFIG_TEST_ENV_VAR      "),
+                "notSet": new ValueNode("${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR}"),
+                "withDefault": new ValueNode("$MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!"),
+                "withDefaultAndBrackets": new ValueNode(
+                    "${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:use default!}"),
+                "megaMix": new ValueNode("${MIRAGE_CONFIG_TEST_ENV_VAR_TWO} ${MIRAGE_CONFIG_TEST_ENV_VAR} ${MIRAGE_CONFIG_NOT_SET_TEST_ENV_VAR:go}!"),
+                "typical": new ValueNode("${MIRAGE_CONFIG_TEST_HOSTNAME:localhost}:${MIRAGE_CONFIG_TEST_PORT:8080}"),
+            ])
+        );
+
+        assert(config.get("withBrackets") == "is set!");
+        assert(config.get("withoutBrackets") == "is set!");
+        assert(config.get("withWhiteSpace") == "        is set!         ");
+        assert(config.get("alsoWithWhiteSpace") == "    is set!");
+        assertThrown!Exception(config.get("tooMuchWhiteSpace")); // Environment variable not found (whitespace is included in env name)
+        assertThrown!Exception(config.get("notSet")); // Environment variable not found
+        assert(config.get("withDefault") == "use default!");
+        assert(config.get("withDefaultAndBrackets") == "use default!");
+        assert(config.get("megaMix") == "is ready! is set! go!");
+        assert(config.get("typical") == "localhost:8080");
     }
 }

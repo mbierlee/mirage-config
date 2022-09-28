@@ -12,7 +12,8 @@
     {
       "name": "unittest",
       "targetType": "executable",
-      "sourcePaths": ["source"]
+      "sourcePaths": ["source"],
+      "mainSourceFile": "source/mirage/testmain.d"
     },
     {
       "name": "jsonExample",
