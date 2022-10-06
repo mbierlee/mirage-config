@@ -18,7 +18,7 @@
     {
       "name": "jsonExample",
       "targetType": "executable",
-      "description": "Example of how to read and work with JSON configurations.",
+      "description": "Example on how to read and work with JSON configurations.",
       "targetName": "jsonExample",
       "sourcePaths": ["examples/json"],
       "importPaths": ["source"],
@@ -29,13 +29,24 @@
     {
       "name": "valueSubstitutionExample",
       "targetType": "executable",
-      "description": "Example of how to use environment and config substitution.",
+      "description": "Example on how to use environment and config substitution.",
       "targetName": "valueSubstitutionExample",
       "sourcePaths": ["examples/valueSubstitution"],
       "importPaths": ["source"],
       "copyFiles": ["examples/valueSubstitution/config.json"],
       "targetPath": "bin/examples/valueSubstitution",
       "workingDirectory": "bin/examples/valueSubstitution"
+    },
+    {
+      "name": "manipulationExample",
+      "targetType": "executable",
+      "description": "Example on how to change configuration.",
+      "targetName": "manipulationExample",
+      "sourcePaths": ["examples/manipulation"],
+      "importPaths": ["source"],
+      "copyFiles": ["examples/manipulation/config.json"],
+      "targetPath": "bin/examples/manipulation",
+      "workingDirectory": "bin/examples/manipulation"
     }
   ]
 }

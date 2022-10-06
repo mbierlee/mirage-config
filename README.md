@@ -17,5 +17,6 @@ This is a work in progress. More will follow. For now see `examples/` to learn h
 TODO: add tutorial on:
 - Config loading
 - Config parsing
+- Config manip
 - Env and config var substitution
 -- Escaping
