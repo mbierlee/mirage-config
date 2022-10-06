@@ -349,7 +349,19 @@ class ConfigDictionary {
         return new ConfigDictionary(node);
     }
 
-    string createExceptionPath(ConfigPath path) {
+    /** 
+     * Assign a value at the given path.
+     * 
+     * Params:
+     *   configPath = Path where to assign the value to. If the path does not exist, it will be created.
+     *   value = Value to set at path.
+     */
+    void set(string configPath, string value) {
+        auto path = new ConfigPath(configPath);
+        rootNode = insertAtPath(rootNode, path, value);
+    }
+
+    private string createExceptionPath(ConfigPath path) {
         return "'" ~ path.path ~ "' (at '" ~ path.getCurrentPath() ~ "')";
     }
 
@@ -529,6 +541,28 @@ class ConfigDictionary {
         }
 
         return result;
+    }
+
+    private ConfigNode insertAtPath(ConfigNode node, ConfigPath path, const string value) {
+        auto nextSegment = path.getNextSegment();
+        if (nextSegment is null) {
+            return new ValueNode(value);
+        }
+
+        auto propertySegment = cast(PropertyPathSegment) nextSegment;
+        if (propertySegment is null) {
+            throw new Exception("Not yet implemented: cannot set array"); // todo
+        }
+
+        auto objectNode = node is null ? new ObjectNode() : cast(ObjectNode) node;
+        if (objectNode is null) {
+            throw new Exception("Not yet implemented: cannot set array"); // todo
+        }
+
+        auto childNodePtr = propertySegment.propertyName in objectNode.children;
+        ConfigNode childNode = childNodePtr !is null ? *childNodePtr : new ObjectNode();
+        objectNode.children[propertySegment.propertyName] = insertAtPath(childNode, path, value);
+        return objectNode;
     }
 }
 
@@ -1004,5 +1038,67 @@ version (unittest) {
         assert(config.get("escape room") == "\\\\");
     }
 
-    //TODO: Test null nodes should gracefully fail
+    @("Set value at path when path does not exist")
+    unittest {
+        auto config = new ConfigDictionary();
+        config.set("do.re.mi.fa.so", "buh");
+
+        assert(config.get("do.re.mi.fa.so") == "buh");
+    }
+
+    @("Set value at path when object at path exists")
+    unittest {
+        auto config = new ConfigDictionary(
+            new ObjectNode(
+                [
+                "one": new ObjectNode([
+                    "two": new ObjectNode([
+                            "mouseSound": "meep"
+                        ])
+                ])
+            ])
+        );
+
+        config.set("one.two.catSound", "meow");
+
+        assert(config.get("one.two.mouseSound") == "meep");
+        assert(config.get("one.two.catSound") == "meow");
+    }
+
+    @("Overwrite value at path")
+    unittest {
+        auto config = new ConfigDictionary(
+            new ObjectNode(
+                [
+                "one": new ObjectNode([
+                    "two": new ObjectNode([
+                            "mouseSound": "meep"
+                        ])
+                ])
+            ])
+        );
+
+        config.set("one.two.mouseSound", "yo");
+
+        assert(config.get("one.two.mouseSound") == "yo");
+    }
+
+    @("Diverge path completely")
+    unittest {
+        auto config = new ConfigDictionary(
+            new ObjectNode(
+                [
+                "one": new ObjectNode([
+                    "two": new ObjectNode([
+                            "mouseSound": "meep"
+                        ])
+                ])
+            ])
+        );
+
+        config.set("I.am", "baboon");
+
+        assert(config.get("one.two.mouseSound") == "meep");
+        assert(config.get("I.am") == "baboon");
+    }
 }
