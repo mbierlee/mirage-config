@@ -55,6 +55,17 @@ More formats are available (see [Formats](#formats)).
 For more details and examples, see the [examples](examples) directory.
 
 ## Formats
+The following file formats are currently supported:
+
+| Format      | Extension   | Import<sup>*</sup> | Loader                    | Parser                          | Factory                 |
+|-------------|-------------|--------------------|---------------------------|---------------------------------|-------------------------|
+| _any below_ | _any below_ | `mirage`           | `loadConfig`<sup>**</sup> | _(N/A)_                         |                         |
+| JSON        | .json       | `mirage.json`      | `loadJsonConfig`          | `parseJsonConfig`<sup>***</sup> | `JsonConfigFactory`     |
+| Java        | .properties | `mirage.java`      | `loadJavaProperties`      | `parseJavaProperties`           | `JavaPropertiesFactory` |
+
+<sup>\*</sup> _Any loader or parser can be imported from the `mirage` package since they are all publicly imported._  
+<sup>\*\*</sup> _Loads files based on their extension. If the file does not use one of the extensions in the table, you must use a specific loader._  
+<sup>\*\*\*</sup> _Besides parsing strings like the other formats, it also accepts a `JSONValue`._
 
 ## History
 
