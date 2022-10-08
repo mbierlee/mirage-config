@@ -53,7 +53,7 @@ void main() {
 }
 ```
 
-More formats are available (see [Formats](#formats)).  
+More formats are available (see [Formats](#formats).)  
 For more details and examples, see the [examples](examples) directory.
 
 ## Formats
