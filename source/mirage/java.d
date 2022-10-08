@@ -43,7 +43,7 @@ class JavaPropertiesFactory : ConfigFactory {
             enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
                     .to!string ~ "): " ~ trimmedLine);
             enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ trimmedLine);
-            properties.set(parts[0], parts[1]);
+            properties.set(parts[0].strip, parts[1].strip);
         }
 
         return properties;
@@ -121,5 +121,14 @@ version (unittest) {
         ");
 
         assert(config.get("two") == "money");
+    }
+
+    @("Values and keys are trimmed")
+    unittest {
+        auto config = parseJavaProperties("
+            one    =       money
+        ");
+
+        assert(config.get("one") == "money");
     }
 }
