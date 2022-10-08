@@ -7,7 +7,7 @@
  *  The full terms of the license can be found in the LICENSE file.
  */
 
-import mirage.json : loadJsonConfig, parseJsonConfig;
+import mirage.config : loadConfig;
 
 import std.stdio : writeln;
 import std.process : environment;
@@ -17,7 +17,7 @@ void main() {
     // environment variables or other configuration paths.
 
     environment["CONFIG_EXAMPLE_SUBJECT"] = "world";
-    auto config = loadJsonConfig("config.json");
+    auto config = loadConfig("config.json"); // Can be done with other formats too.
 
     writeln(config.get("start")); // "Hello world! Enjoy your day!"
     writeln(config.get("end"));   // "Bye!"

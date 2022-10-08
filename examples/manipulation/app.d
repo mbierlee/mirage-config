@@ -9,12 +9,12 @@ module examples.manipulation.app;
  *  The full terms of the license can be found in the LICENSE file.
  */
 
-import mirage.json : loadJsonConfig;
+import mirage.config : loadConfig;
 
 import std.stdio : writeln;
 
 void main() {
-    auto config = loadJsonConfig("config.json");
+    auto config = loadConfig("config.json");
     config.set("application.name", "Real HTTP Server");
 
     auto applicationName = config.get("application.name");
