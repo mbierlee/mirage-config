@@ -27,6 +27,17 @@
       "workingDirectory": "bin/examples/json"
     },
     {
+      "name": "javaPropertiesExample",
+      "targetType": "executable",
+      "description": "Example on how to read and work with Java properties.",
+      "targetName": "javaPropertiesExample",
+      "sourcePaths": ["examples/javaProperties"],
+      "importPaths": ["source"],
+      "copyFiles": ["examples/javaProperties/application.properties"],
+      "targetPath": "bin/examples/javaProperties",
+      "workingDirectory": "bin/examples/javaProperties"
+    },
+    {
       "name": "valueSubstitutionExample",
       "targetType": "executable",
       "description": "Example on how to use environment and config substitution.",
