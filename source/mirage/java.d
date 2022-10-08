@@ -13,7 +13,7 @@ module mirage.java;
 
 import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, ObjectNode, ConfigCreationException;
 
-import std.string : lineSplitter, strip, startsWith, split;
+import std.string : lineSplitter, strip, startsWith, split, indexOf;
 import std.array : array;
 import std.exception : enforce;
 import std.conv : to;
@@ -34,15 +34,20 @@ class JavaPropertiesFactory : ConfigFactory {
         auto lines = contents.lineSplitter().array;
         auto properties = new ConfigDictionary();
         foreach (size_t index, string line; lines) {
-            auto trimmedLine = line.strip;
-            if (trimmedLine.length == 0 || trimmedLine.startsWith('#')) {
+            auto normalizedLine = line.strip;
+            if (normalizedLine.length == 0 || normalizedLine.startsWith('#')) {
                 continue;
             }
 
-            auto parts = trimmedLine.split('=');
+            auto commentPosition = normalizedLine.indexOf('#');
+            if (commentPosition >= 0) {
+                normalizedLine = normalizedLine[0 .. commentPosition];
+            }
+
+            auto parts = normalizedLine.split('=');
             enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
-                    .to!string ~ "): " ~ trimmedLine);
-            enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ trimmedLine);
+                    .to!string ~ "): " ~ normalizedLine);
+            enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ normalizedLine);
             properties.set(parts[0].strip, parts[1].strip);
         }
 
@@ -130,5 +135,14 @@ version (unittest) {
         ");
 
         assert(config.get("one") == "money");
+    }
+
+    @("Remove end-of-line comments")
+    unittest {
+        auto config = parseJavaProperties("
+            server=localhost #todo: change me. default=localhost when not set.
+        ");
+
+        assert(config.get("server") == "localhost");
     }
 }
