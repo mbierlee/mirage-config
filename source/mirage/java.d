@@ -59,7 +59,7 @@ class JavaPropertiesFactory : ConfigFactory {
  * Parse Java properties from the given Java properties string.
 
  * Params:
- *   json = Text contents of the config to be parsed.
+ *   properties = Text contents of the config to be parsed.
  * Returns: The parsed configuration.
  */
 ConfigDictionary parseJavaProperties(const string properties) {

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0"/>
+		<title>Class ConfigDictionary</title>
+		<link rel="stylesheet" href="../../css/style.min.css"/>
+		<script type="text/javascript" src="../../js/script.min.js"></script>
+	</head>
+	<body onload="setupDdox();">
+		<header></header>
+		<nav id="main-nav">
+			<div>
+				<noscript>
+					<p style="color: red">The search functionality needs JavaScript enabled</p>
+				</noscript>
+				<div id="symbolSearchPane" style="display: none">
+					<form action="#" method="GET">
+						<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(24);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();" autofocus/>
+					</form>
+					<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../../";
+document.getElementById('symbolSearchPane').style.display = 'block';</script>
+				</div>
+				<ul class="tree-view">
+					<li class="tree-view ">
+						<div class="package ">
+							<a href="../../mirage.html">mirage</a>
+						</div>
+				<ul class="tree-view">
+					<li>
+						<div class="module selected">
+							<a href="../../mirage/config.html">config</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../mirage/java.html">java</a>
+						</div>
+					</li>
+					<li>
+						<div class="module ">
+							<a href="../../mirage/json.html">json</a>
+						</div>
+					</li>
+				</ul>
+					</li>
+				</ul>
+			</div>
+			<p id="main-nav-footer">
+				Built with
+				<a href="https://github.com/MartinNowak/scod">scod</a>
+			</p>
+		</nav>
+		<div id="main-contents">
+			<div>
+				<h1>Class ConfigDictionary</h1><p>A ConfigDictionary contains the configuration tree and facilities to get values from that tree.
+</p>
+				<div class="prototype">
+					<code class="lang-d">
+						<div class="single-prototype">
+				<span class="kwd">class</span> <span class="typ">ConfigDictionary</span>
+				<span class="pun">;</span>
+						</div>
+					</code>
+				</div>
+				
+				<section><h2>Methods</h2>
+					<table>
+						<col class="caption"/>
+						<tr>
+							<th>Name</th><th>Description</th>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../mirage/config/ConfigDictionary.get.html" class="public">
+									<code>get</code>
+								</a>
+								<span class="tableEntryAnnotation">(configPath, defaultValue)</span>
+							</td>
+							<td>Get values from the configuration using config path notation.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../mirage/config/ConfigDictionary.get.html" class="public">
+									<code>get</code>
+								</a>
+								<span class="tableEntryAnnotation">(configPath)</span>
+							</td>
+							<td>Get values from the configuration and attempts to convert them to the specified type.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../mirage/config/ConfigDictionary.get.html" class="public">
+									<code>get</code>
+								</a>
+								<span class="tableEntryAnnotation">(configPath, defaultValue)</span>
+							</td>
+							<td>Get values from the configuration and attempts to convert them to the specified type.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../mirage/config/ConfigDictionary.getConfig.html" class="public">
+									<code>getConfig</code>
+								</a>
+								<span class="tableEntryAnnotation">(configPath)</span>
+							</td>
+							<td>Fetch a sub-section of the config as another config.
+</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="../../mirage/config/ConfigDictionary.set.html" class="public">
+									<code>set</code>
+								</a>
+								<span class="tableEntryAnnotation">(configPath, value)</span>
+							</td>
+							<td>Assign a value at the given path.
+</td>
+						</tr>
+					</table>
+				</section>
+				
+			</div>
+			<footer>
+				<div id="license-info">
+					<p>Mike Bierlee, m.bierlee@lostmoment.com
+</p>
+
+					<p>2022 Mike Bierlee
+</p>
+
+					<p>This software is licensed under the terms of the MIT license.
+  The full terms of the license can be found in the LICENSE file.
+</p>
+
+				</div>
+			</footer>
+		</div>
+	</body>
+</html>

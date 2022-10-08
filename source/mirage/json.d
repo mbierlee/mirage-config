@@ -36,7 +36,7 @@ class JsonConfigFactory : ConfigFactory {
      * Parse configuration from a JSONValue tree. 
      *
      * Params:
-     *   contents = JSONValue config to be parsed.
+     *   json = JSONValue config to be parsed.
      * Returns: The parsed configuration.
      */
     ConfigDictionary parseJson(JSONValue json) {
@@ -47,7 +47,7 @@ class JsonConfigFactory : ConfigFactory {
      * Alias for parseConfig
      *
      * Params:
-     *   contents = Text contents of the config to be parsed.
+     *   json = Text contents of the config to be parsed.
      * Returns: The parsed configuration.
      * See_Also: parseConfig
      */
@@ -111,7 +111,7 @@ ConfigDictionary parseJsonConfig(const string json) {
  * Parse JSON config from the given JSONValue.
  *
  * Params:
- *   contents = JSONValue config to be parsed.
+ *   json = JSONValue config to be parsed.
  * Returns: The parsed configuration.
  */
 ConfigDictionary parseJsonConfig(const JSONValue json) {
