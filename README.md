@@ -67,6 +67,18 @@ The following file formats are currently supported:
 <sup>\*\*</sup> _Loads files based on their extension. If the file does not use one of the extensions in the table, you must use a specific loader._  
 <sup>\*\*\*</sup> _Besides parsing strings like the other formats, it also accepts a `JSONValue`._
 
+Documentation
+-------------
+You can generate documentation from the source code using DUB:
+```
+dub build --build=ddox
+```
+The documentation can then be found in docs/
+
 ## History
 
 For a full overview of changes, see [CHANGES.md](CHANGES.md)
+
+## Contributing
+
+Any and all pull requests are welcome! If you (only) want discuss changes before making them, feel free to open an Issue on github. Please develop your changes on (a branch based on) the develop branch. Continuous integration is preferred so feature branches are not neccessary.

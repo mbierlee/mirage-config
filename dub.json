@@ -4,6 +4,7 @@
   "copyright": "Copyright © 2022, Mike Bierlee",
   "authors": ["Mike Bierlee"],
   "license": "MIT",
+  "-ddoxTool": "scod",
   "configurations": [
     {
       "name": "library",
