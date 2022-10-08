@@ -7,7 +7,7 @@ Licensed under the terms of the MIT license - See [LICENSE.txt](LICENSE.txt)
 Toolkit for loading and using application configuration from various formats.
 
 Features:
-- Load from various file formats such as JSON;
+- Load from various file formats such as JSON and Java properties;
 - Environment variable substitution;
 - Internal configuration substitution (Value in config replaced by other path in config);
 - Parse configuration from string or JSONValue instead of from disk.

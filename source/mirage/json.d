@@ -196,7 +196,7 @@ version (unittest) {
         assert(config.get("taxNumber") == null);
     }
 
-    @("Substitute env vars in JSON")
+    @("Substitute env vars")
     unittest {
         environment["MIRAGE_TEST_APP_NAME"] = "Unittest";
         environment["MIRAGE_TEST_HOSTNAME"] = "wonkeyhost";
@@ -207,5 +207,19 @@ version (unittest) {
         assert(config.get("server.host") == "wonkeyhost");
         assert(config.get("server.port") == "8118");
         assert(config.get("app") == "Unittest server - built with love");
+    }
+
+    @("Use value from other key")
+    unittest {
+        string json = "
+            {
+                \"one\": \"Groot\",
+                \"two\": \"${one}\",
+            } 
+        ";
+
+        auto config = parseJsonConfig(json);
+
+        assert(config.get("two") == "Groot");
     }
 }

@@ -11,3 +11,4 @@ module mirage;
 
 public import mirage.config;
 public import mirage.json;
+public import mirage.java;
