@@ -20,6 +20,7 @@ import std.process : environment;
 import std.typecons : Flag;
 
 import mirage.json : loadJsonConfig;
+import mirage.java : loadJavaProperties;
 
 /** 
  * Used by the ConfigDictionary when something goes wrong when reading configuration.
@@ -598,6 +599,10 @@ ConfigDictionary loadConfig(const string configPath) {
         return loadJsonConfig(configPath);
     }
 
+    if (extension == ".properties") {
+        return loadJavaProperties(configPath);
+    }
+
     throw new ConfigCreationException(
         "File extension '" ~ extension ~ "' is not recognized as a supported config file format. Please use a specific function to load it, such as 'loadJsonConfig()'");
 }
@@ -839,11 +844,15 @@ version (unittest) {
     @("Load configurations using the loadConfig convenience function")
     unittest {
         auto jsonConfig = loadConfig("testfiles/groot.json");
-
         assert(jsonConfig.get("name") == "Groot");
         assert(jsonConfig.get("traits[1]") == "tree");
         assert(jsonConfig.get("age") == "8728");
         assert(jsonConfig.get("taxNumber") == null);
+
+        auto javaProperties = loadConfig("testfiles/groot.properties");
+        assert(javaProperties.get("name") == "Groot");
+        assert(javaProperties.get("age") == "8728");
+        assert(javaProperties.get("taxNumber") == "null");
     }
 
     @("Whitespace is preserved in values")
