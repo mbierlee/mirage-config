@@ -16,6 +16,17 @@
       "mainSourceFile": "source/mirage/testmain.d"
     },
     {
+      "name": "quickstartExample",
+      "targetType": "executable",
+      "description": "Minimal example on how to get started.",
+      "targetName": "quickstartExample",
+      "sourcePaths": ["examples/quickstart"],
+      "importPaths": ["source"],
+      "copyFiles": ["examples/quickstart/config.json"],
+      "targetPath": "bin/examples/quickstart",
+      "workingDirectory": "bin/examples/quickstart"
+    },
+    {
       "name": "jsonExample",
       "targetType": "executable",
       "description": "Example on how to read and work with JSON configurations.",

@@ -11,10 +11,14 @@ test:
 clean:
 	dub clean
 
-run-examples: run-jsonExample \
+run-examples: run-quickstartExample\
+	run-jsonExample \
 	run-javaPropertiesExample \
 	run-valueSubstitutionExample \
 	run-manipulationExample
+
+run-quickstartExample:
+	dub run --build=release --config=quickstartExample
 
 run-jsonExample:
 	dub run --build=release --config=jsonExample

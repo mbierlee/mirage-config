@@ -13,8 +13,6 @@ Features:
 - Internal configuration substitution (Value in config replaced by other path in config);
 - Parse configuration from string or JSONValue instead of from disk.
 
-This is a work in progress. More will follow. For now see `examples/` to learn how to use it.
-
 TODO: add tutorial on:
 
 - Config loading
@@ -22,6 +20,41 @@ TODO: add tutorial on:
 - Config manip
 - Env and config var substitution
   -- Escaping
+
+## Getting started
+### DUB Dependency
+See the [DUB project page](https://code.dlang.org/packages/mirage-config) for instructions on how to include Mirage Config into your project.
+
+### Quickstart
+```d
+import std.stdio : writeln;
+import mirage : loadConfig, parseJavaProperties;
+
+void main() {
+    // Load configuration from file (see examples/quickstart/config.json):
+    auto config = loadConfig("config.json");
+    writeln(config.get("application.name"));
+    writeln(config.get!long("application.version"));
+
+    // Or parse directly from string:
+    auto properties = parseJavaProperties("
+        databaseDriver = Postgres
+        database.host = localhost
+        database.port = 5432
+    ");
+
+    auto databaseConfig = properties.getConfig("database");
+
+    writeln(properties.get("databaseDriver"));
+    writeln(databaseConfig.get("host"));
+    writeln(databaseConfig.get("port"));
+}
+```
+
+More formats are available (see [Formats](#formats)).  
+For more details and examples, see the [examples](examples) directory.
+
+## Formats
 
 ## History
 
