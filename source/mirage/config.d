@@ -1110,4 +1110,13 @@ version (unittest) {
         assert(config.get("one.two.mouseSound") == "meep");
         assert(config.get("I.am") == "baboon");
     }
+
+    @("Setting the same value twice will use latest setting")
+    unittest {
+        auto config = new ConfigDictionary();
+        config.set("key", "value");
+        config.set("key", "alsoValue");
+
+        assert(config.get("key") == "alsoValue");
+    }
 }
