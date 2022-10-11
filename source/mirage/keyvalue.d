@@ -13,7 +13,7 @@ module mirage.keyvalue;
 
 import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, ObjectNode, ConfigCreationException;
 
-import std.string : lineSplitter, strip, startsWith, endsWith, split, indexOf;
+import std.string : lineSplitter, strip, startsWith, endsWith, split, indexOf, join;
 import std.array : array;
 import std.exception : enforce;
 import std.conv : to;
@@ -64,7 +64,13 @@ class KeyValueConfigFactory(
             processedLine = processedLine.strip;
 
             if (supportSections && processedLine.startsWith('[') && processedLine.endsWith(']')) {
-                section = processedLine[1 .. $ - 1] ~ '.';
+                auto parsedSection = processedLine[1 .. $ - 1];
+                if (parsedSection.startsWith('.')) {
+                    section ~= parsedSection;
+                } else {
+                    section = parsedSection;
+                }
+
                 continue;
             }
 
@@ -77,7 +83,8 @@ class KeyValueConfigFactory(
                     .to!string ~ "): " ~ processedLine);
             enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ processedLine);
 
-            properties.set(section ~ parts[0].strip, parts[1].strip);
+            auto key = [section, parts[0].strip].join('.');
+            properties.set(key, parts[1].strip);
         }
 
         return properties;
@@ -178,6 +185,9 @@ version (unittest) {
             host=localhost
             port=2873
 
+            [.toaster]
+            color=chrome
+
             [server.middleware] ; Stuff that handles the http protocol
             protocolServer = netty
 
@@ -188,6 +198,7 @@ version (unittest) {
         assert(config.get("applicationName") == "test me!");
         assert(config.get("server.host") == "localhost");
         assert(config.get("server.port") == "2873");
+        assert(config.get("server.toaster.color") == "chrome");
         assert(config.get("server.middleware.protocolServer") == "netty");
         assert(config.get("database.driver.id") == "PostgresDriver");
     }
