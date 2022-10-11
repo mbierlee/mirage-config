@@ -22,6 +22,7 @@ import std.typecons : Flag;
 alias SupportHashtagComments = Flag!"SupportHashtagComments";
 alias SupportSemicolonComments = Flag!"SupportSemicolonComments";
 alias SupportSections = Flag!"SupportSections";
+alias NormalizeQuotedValues = Flag!"NormalizeQuotedValues";
 
 /** 
  * A generic reusable key/value config factory that can be configured to parse
@@ -30,7 +31,8 @@ alias SupportSections = Flag!"SupportSections";
 class KeyValueConfigFactory(
     SupportHashtagComments supportHashtagComments = SupportHashtagComments.no,
     SupportSemicolonComments supportSemicolonComments = SupportSemicolonComments.no,
-    SupportSections supportSections = SupportSections.no
+    SupportSections supportSections = SupportSections.no,
+    NormalizeQuotedValues normalizeQuotedValues = NormalizeQuotedValues.no
 ) : ConfigFactory {
     /**
      * Parse a configuration file following the configured key/value conventions.
@@ -83,8 +85,14 @@ class KeyValueConfigFactory(
                     .to!string ~ "): " ~ processedLine);
             enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ processedLine);
 
+            auto value = parts[1].strip;
+            if (normalizeQuotedValues && (value.startsWith('"') || value.startsWith('\''))
+                && (value.endsWith('"') || value.endsWith('\''))) {
+                value = value[1 .. $ - 1];
+            }
+
             auto key = [section, parts[0].strip].join('.');
-            properties.set(key, parts[1].strip);
+            properties.set(key, value);
         }
 
         return properties;
@@ -111,7 +119,8 @@ version (unittest) {
 
     @("Parse and ignore comments")
     unittest {
-        auto config = new KeyValueConfigFactory!(SupportHashtagComments.yes,
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.yes,
             SupportSemicolonComments.yes
         )().parseConfig("
             # this is a comment
@@ -131,8 +140,7 @@ version (unittest) {
     @("Fail to parse when value assignment is missing")
     unittest {
         assertThrown!ConfigCreationException(new TestKeyValueConfigFactory()
-                .parseConfig(
-                    "answertolife"));
+                .parseConfig("answertolife"));
     }
 
     @("Substitute env vars")
@@ -164,8 +172,10 @@ version (unittest) {
 
     @("Remove end-of-line comments")
     unittest {
-        auto config = new KeyValueConfigFactory!(SupportHashtagComments.yes,
-            SupportSemicolonComments.yes)().parseConfig("
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.yes,
+            SupportSemicolonComments.yes
+        )().parseConfig("
             server=localhost #todo: change me. default=localhost when not set.
             port=9876; I think this port = right?
         ");
@@ -176,9 +186,11 @@ version (unittest) {
 
     @("Support sections when enabled")
     unittest {
-        auto config = new KeyValueConfigFactory!(SupportHashtagComments.no,
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.no,
             SupportSemicolonComments.yes,
-            SupportSections.yes)().parseConfig("
+            SupportSections.yes
+        )().parseConfig("
             applicationName = test me!
 
             [server]
@@ -202,4 +214,25 @@ version (unittest) {
         assert(config.get("server.middleware.protocolServer") == "netty");
         assert(config.get("database.driver.id") == "PostgresDriver");
     }
+
+    @("Values with quotes are normalized and return the value within")
+    unittest {
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.yes,
+            SupportSemicolonComments.no,
+            SupportSections.no,
+            NormalizeQuotedValues.yes
+        )().parseConfig("
+            baboon = \"ape\"
+            monkey = 'ape'
+            human = ape
+            excessiveWhitespace = '             '
+        ");
+
+        assert(config.get("baboon") == "ape");
+        assert(config.get("monkey") == "ape");
+        assert(config.get("human") == "ape");
+        assert(config.get("excessiveWhitespace") == "             ");
+    }
+
 }

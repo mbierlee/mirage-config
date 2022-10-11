@@ -12,7 +12,7 @@
 module mirage.java;
 
 import mirage.config : ConfigDictionary;
-import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportSemicolonComments, SupportSections;
+import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportSemicolonComments, SupportSections, NormalizeQuotedValues;
 
 /** 
  * Creates configuration files from Java properties.
@@ -20,7 +20,8 @@ import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportS
 class JavaPropertiesFactory : KeyValueConfigFactory!(
     SupportHashtagComments.yes,
     SupportSemicolonComments.no,
-    SupportSections.no
+    SupportSections.no,
+    NormalizeQuotedValues.no
 ) {
 }
 
@@ -114,5 +115,16 @@ version (unittest) {
         ");
 
         assert(config.get("server") == "localhost");
+    }
+
+    @("Quotes in values are preserved")
+    unittest {
+        auto config = parseJavaProperties("
+            one=\"two\"
+            three='four'
+        ");
+
+        assert(config.get("one") == "\"two\"");
+        assert(config.get("three") == "'four'");
     }
 }
