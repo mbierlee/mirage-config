@@ -11,48 +11,13 @@
 
 module mirage.java;
 
-import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, ObjectNode, ConfigCreationException;
-
-import std.string : lineSplitter, strip, startsWith, split, indexOf;
-import std.array : array;
-import std.exception : enforce;
-import std.conv : to;
+import mirage.config : ConfigDictionary;
+import mirage.keyvalue : KeyValueConfigFactory;
 
 /** 
  * Creates configuration files from Java properties.
  */
-class JavaPropertiesFactory : ConfigFactory {
-    /**
-     * Parse configuration from the given Java properties string.
-     *
-     * Params:
-     *   contents = Text contents of the config to be parsed.
-     * Returns: The parsed configuration.
-     */
-    override ConfigDictionary parseConfig(string contents) {
-        enforce!ConfigCreationException(contents !is null, "Contents cannot be null.");
-        auto lines = contents.lineSplitter().array;
-        auto properties = new ConfigDictionary();
-        foreach (size_t index, string line; lines) {
-            auto normalizedLine = line.strip;
-            if (normalizedLine.length == 0 || normalizedLine.startsWith('#')) {
-                continue;
-            }
-
-            auto commentPosition = normalizedLine.indexOf('#');
-            if (commentPosition >= 0) {
-                normalizedLine = normalizedLine[0 .. commentPosition];
-            }
-
-            auto parts = normalizedLine.split('=');
-            enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
-                    .to!string ~ "): " ~ normalizedLine);
-            enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ normalizedLine);
-            properties.set(parts[0].strip, parts[1].strip);
-        }
-
-        return properties;
-    }
+class JavaPropertiesFactory : KeyValueConfigFactory {
 }
 
 /** 
@@ -80,6 +45,7 @@ ConfigDictionary loadJavaProperties(const string filePath) {
 version (unittest) {
     import std.exception : assertThrown;
     import std.process : environment;
+    import mirage.config : ConfigCreationException;
 
     @("Parse java properties")
     unittest {
