@@ -86,8 +86,10 @@ class KeyValueConfigFactory(
             enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ processedLine);
 
             auto value = parts[1].strip;
-            if (normalizeQuotedValues && (value.startsWith('"') || value.startsWith('\''))
-                && (value.endsWith('"') || value.endsWith('\''))) {
+            if (normalizeQuotedValues &&
+                value.length > 1 &&
+                (value.startsWith('"') || value.startsWith('\'')) &&
+                (value.endsWith('"') || value.endsWith('\''))) {
                 value = value[1 .. $ - 1];
             }
 
@@ -227,12 +229,14 @@ version (unittest) {
             monkey = 'ape'
             human = ape
             excessiveWhitespace = '             '
+            breaksWithComments = '   # Don't do this    '
         ");
 
         assert(config.get("baboon") == "ape");
         assert(config.get("monkey") == "ape");
         assert(config.get("human") == "ape");
         assert(config.get("excessiveWhitespace") == "             ");
+        assert(config.get("breaksWithComments") == "'");
     }
 
 }
