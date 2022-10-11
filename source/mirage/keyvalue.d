@@ -13,14 +13,15 @@ module mirage.keyvalue;
 
 import mirage.config : ConfigFactory, ConfigDictionary, ConfigNode, ValueNode, ObjectNode, ConfigCreationException;
 
-import std.string : lineSplitter, strip, startsWith, split, indexOf;
+import std.string : lineSplitter, strip, startsWith, endsWith, split, indexOf;
 import std.array : array;
 import std.exception : enforce;
 import std.conv : to;
 import std.typecons : Flag;
 
-alias SupportHashtagComments = Flag!"supportHashtagComment";
-alias SupportSemicolonComments = Flag!"supportSemicolonComments";
+alias SupportHashtagComments = Flag!"SupportHashtagComments";
+alias SupportSemicolonComments = Flag!"SupportSemicolonComments";
+alias SupportSections = Flag!"SupportSections";
 
 /** 
  * A generic reusable key/value config factory that can be configured to parse
@@ -28,7 +29,8 @@ alias SupportSemicolonComments = Flag!"supportSemicolonComments";
  */
 class KeyValueConfigFactory(
     SupportHashtagComments supportHashtagComments = SupportHashtagComments.no,
-    SupportSemicolonComments supportSemicolonComments = SupportSemicolonComments.no
+    SupportSemicolonComments supportSemicolonComments = SupportSemicolonComments.no,
+    SupportSections supportSections = SupportSections.no
 ) : ConfigFactory {
     /**
      * Parse a configuration file following the configured key/value conventions.
@@ -41,33 +43,41 @@ class KeyValueConfigFactory(
         enforce!ConfigCreationException(contents !is null, "Contents cannot be null.");
         auto lines = contents.lineSplitter().array;
         auto properties = new ConfigDictionary();
+        auto section = "";
         foreach (size_t index, string line; lines) {
-            auto normalizedLine = line;
+            auto processedLine = line;
 
             if (supportHashtagComments) {
-                auto commentPosition = normalizedLine.indexOf('#');
+                auto commentPosition = processedLine.indexOf('#');
                 if (commentPosition >= 0) {
-                    normalizedLine = normalizedLine[0 .. commentPosition];
+                    processedLine = processedLine[0 .. commentPosition];
                 }
             }
 
             if (supportSemicolonComments) {
-                auto commentPosition = normalizedLine.indexOf(';');
+                auto commentPosition = processedLine.indexOf(';');
                 if (commentPosition >= 0) {
-                    normalizedLine = normalizedLine[0 .. commentPosition];
+                    processedLine = processedLine[0 .. commentPosition];
                 }
             }
 
-            normalizedLine = normalizedLine.strip;
-            if (normalizedLine.length == 0) {
+            processedLine = processedLine.strip;
+
+            if (supportSections && processedLine.startsWith('[') && processedLine.endsWith(']')) {
+                section = processedLine[1 .. $ - 1] ~ '.';
                 continue;
             }
 
-            auto parts = normalizedLine.split('=');
+            if (processedLine.length == 0) {
+                continue;
+            }
+
+            auto parts = processedLine.split('=');
             enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
-                    .to!string ~ "): " ~ normalizedLine);
-            enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ normalizedLine);
-            properties.set(parts[0].strip, parts[1].strip);
+                    .to!string ~ "): " ~ processedLine);
+            enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ processedLine);
+
+            properties.set(section ~ parts[0].strip, parts[1].strip);
         }
 
         return properties;
@@ -155,5 +165,30 @@ version (unittest) {
 
         assert(config.get("server") == "localhost");
         assert(config.get("port") == "9876");
+    }
+
+    @("Support sections when enabled")
+    unittest {
+        auto config = new KeyValueConfigFactory!(SupportHashtagComments.no,
+            SupportSemicolonComments.yes,
+            SupportSections.yes)().parseConfig("
+            applicationName = test me!
+
+            [server]
+            host=localhost
+            port=2873
+
+            [server.middleware] ; Stuff that handles the http protocol
+            protocolServer = netty
+
+            [database.driver]
+            id=PostgresDriver
+        ");
+
+        assert(config.get("applicationName") == "test me!");
+        assert(config.get("server.host") == "localhost");
+        assert(config.get("server.port") == "2873");
+        assert(config.get("server.middleware.protocolServer") == "netty");
+        assert(config.get("database.driver.id") == "PostgresDriver");
     }
 }
