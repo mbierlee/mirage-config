@@ -1,6 +1,6 @@
 {
   "name": "mirage-config",
-  "description": "Configuration utilities supporting formats such as JSON",
+  "description": "Configuration toolkit supporting JSON, INI and Java Properties",
   "copyright": "Copyright © 2022, Mike Bierlee",
   "authors": ["Mike Bierlee"],
   "license": "MIT",
