@@ -15,14 +15,6 @@ Features:
 - Internal configuration substitution (Value in config replaced by other path in config);
 - Parse configuration from string or JSONValue instead of from disk.
 
-TODO: add tutorial on:
-
-- Config loading
-- Config parsing
-- Config manip
-- Env and config var substitution
-  -- Escaping
-
 ## Getting started
 ### DUB Dependency
 See the [DUB project page](https://code.dlang.org/packages/mirage-config) for instructions on how to include Mirage Config into your project.
