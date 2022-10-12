@@ -17,10 +17,11 @@ import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportS
     SupportColonSeparator, SupportKeysWithoutValues;
 
 /** 
- * Creates configuration files from Java properties.
+ * Creates configuration dictionaries from Java properties.
  *
  * Format specifications: 
  *   https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Properties.html#load(java.io.Reader)
+ *   https://en.wikipedia.org/wiki/.properties
  */
 class JavaPropertiesFactory : KeyValueConfigFactory!(
     SupportHashtagComments.yes,
