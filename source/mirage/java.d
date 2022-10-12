@@ -13,8 +13,8 @@ module mirage.java;
 
 import mirage.config : ConfigDictionary;
 import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportSemicolonComments,
-    SupportSections, NormalizeQuotedValues, SupportEqualsSeparator, SupportColonSeparator,
-    SupportKeysWithoutValues;
+    SupportExclamationComments, SupportSections, NormalizeQuotedValues, SupportEqualsSeparator,
+    SupportColonSeparator, SupportKeysWithoutValues;
 
 /** 
  * Creates configuration files from Java properties.
@@ -22,6 +22,7 @@ import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportS
 class JavaPropertiesFactory : KeyValueConfigFactory!(
     SupportHashtagComments.yes,
     SupportSemicolonComments.no,
+    SupportExclamationComments.yes,
     SupportSections.no,
     NormalizeQuotedValues.no,
     SupportEqualsSeparator.yes,
@@ -65,7 +66,7 @@ version (unittest) {
             di.bla=two
             meh: very
             much = not much
-            much: much
+            much: much !important!!!!!!!!
             empty
         ");
 

@@ -21,6 +21,7 @@ import std.typecons : Flag;
 
 alias SupportHashtagComments = Flag!"SupportHashtagComments";
 alias SupportSemicolonComments = Flag!"SupportSemicolonComments";
+alias SupportExclamationComments = Flag!"SupportExclamationComments";
 alias SupportSections = Flag!"SupportSections";
 alias NormalizeQuotedValues = Flag!"NormalizeQuotedValues";
 alias SupportEqualsSeparator = Flag!"SupportEqualsSeparator";
@@ -34,6 +35,7 @@ alias SupportKeysWithoutValues = Flag!"SupportKeysWithoutValues";
 class KeyValueConfigFactory(
     SupportHashtagComments supportHashtagComments = SupportHashtagComments.no,
     SupportSemicolonComments supportSemicolonComments = SupportSemicolonComments.no,
+    SupportExclamationComments supportExclamationComments = SupportExclamationComments.no,
     SupportSections supportSections = SupportSections.no,
     NormalizeQuotedValues normalizeQuotedValues = NormalizeQuotedValues.no,
     SupportEqualsSeparator supportEqualsSeparator = SupportEqualsSeparator.no,
@@ -58,19 +60,18 @@ class KeyValueConfigFactory(
         foreach (size_t index, string line; lines) {
             auto processedLine = line;
 
-            if (supportHashtagComments) {
-                auto commentPosition = processedLine.indexOf('#');
-                if (commentPosition >= 0) {
-                    processedLine = processedLine[0 .. commentPosition];
+            void replaceComments(bool isTypeSupported, char commentToken) {
+                if (isTypeSupported) {
+                    auto commentPosition = processedLine.indexOf(commentToken);
+                    if (commentPosition >= 0) {
+                        processedLine = processedLine[0 .. commentPosition];
+                    }
                 }
             }
 
-            if (supportSemicolonComments) {
-                auto commentPosition = processedLine.indexOf(';');
-                if (commentPosition >= 0) {
-                    processedLine = processedLine[0 .. commentPosition];
-                }
-            }
+            replaceComments(supportHashtagComments, '#');
+            replaceComments(supportSemicolonComments, ';');
+            replaceComments(supportExclamationComments, '!');
 
             processedLine = processedLine.strip;
 
@@ -127,6 +128,7 @@ version (unittest) {
     class TestKeyValueConfigFactory : KeyValueConfigFactory!(
         SupportHashtagComments.no,
         SupportSemicolonComments.no,
+        SupportExclamationComments.no,
         SupportSections.no,
         NormalizeQuotedValues.no,
         SupportEqualsSeparator.yes,
@@ -151,6 +153,7 @@ version (unittest) {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.yes,
             SupportSemicolonComments.yes,
+            SupportExclamationComments.yes,
             SupportSections.no,
             NormalizeQuotedValues.no,
             SupportEqualsSeparator.yes,
@@ -158,6 +161,7 @@ version (unittest) {
         )().parseConfig("
             # this is a comment
             ; this is another comment
+            ! this then is also a comment!
             iamset=true
         ");
 
@@ -181,6 +185,7 @@ version (unittest) {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.no,
             SupportSemicolonComments.no,
+            SupportExclamationComments.no,
             SupportSections.no,
             NormalizeQuotedValues.no,
             SupportEqualsSeparator.yes,
@@ -223,6 +228,7 @@ version (unittest) {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.yes,
             SupportSemicolonComments.yes,
+            SupportExclamationComments.yes,
             SupportSections.no,
             NormalizeQuotedValues.no,
             SupportEqualsSeparator.yes,
@@ -230,10 +236,12 @@ version (unittest) {
         )().parseConfig("
             server=localhost #todo: change me. default=localhost when not set.
             port=9876; I think this port = right?
+            timeout=36000 ! pretty long!
         ");
 
         assert(config.get("server") == "localhost");
         assert(config.get("port") == "9876");
+        assert(config.get("timeout") == "36000");
     }
 
     @("Support sections when enabled")
@@ -241,6 +249,7 @@ version (unittest) {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.no,
             SupportSemicolonComments.yes,
+            SupportExclamationComments.no,
             SupportSections.yes,
             NormalizeQuotedValues.no,
             SupportEqualsSeparator.yes,
@@ -275,6 +284,7 @@ version (unittest) {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.yes,
             SupportSemicolonComments.no,
+            SupportExclamationComments.no,
             SupportSections.no,
             NormalizeQuotedValues.yes,
             SupportEqualsSeparator.yes,
@@ -299,6 +309,7 @@ version (unittest) {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.no,
             SupportSemicolonComments.no,
+            SupportExclamationComments.no,
             SupportSections.no,
             NormalizeQuotedValues.no,
             SupportEqualsSeparator.yes,
