@@ -10,7 +10,7 @@ Toolkit for loading and using application configuration from various formats.
 
 Features:
 
-- Load from various file formats such as JSON and Java properties (see [Formats](#formats));
+- Load from various file formats such as JSON, INI and Java properties (see [Formats](#formats));
 - Environment variable substitution;
 - Internal configuration substitution (Value in config replaced by other path in config);
 - Parse configuration from string or JSONValue instead of from disk.
