@@ -56,6 +56,7 @@ The following file formats are currently supported:
 | _any below_ | _any below_ | `mirage`           | `loadConfig`<sup>**</sup> | _(N/A)_                         |                         |
 | JSON        | .json       | `mirage.json`      | `loadJsonConfig`          | `parseJsonConfig`<sup>***</sup> | `JsonConfigFactory`     |
 | Java        | .properties | `mirage.java`      | `loadJavaProperties`      | `parseJavaProperties`           | `JavaPropertiesFactory` |
+| INI         | .ini        | `mirage.ini`       | `loadIniConfig`           | `parseIniConfig`                | `IniConfigFactory`      |
 
 <sup>\*</sup> _Any loader or parser can be imported from the `mirage` package since they are all publicly imported._  
 <sup>\*\*</sup> _Loads files based on their extension. If the file does not use one of the extensions in the table, you must use a specific loader._  

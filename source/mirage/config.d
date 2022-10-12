@@ -21,6 +21,7 @@ import std.typecons : Flag;
 
 import mirage.json : loadJsonConfig;
 import mirage.java : loadJavaProperties;
+import mirage.ini : loadIniConfig;
 
 /** 
  * Used by the ConfigDictionary when something goes wrong when reading configuration.
@@ -603,6 +604,10 @@ ConfigDictionary loadConfig(const string configPath) {
         return loadJavaProperties(configPath);
     }
 
+    if (extension == ".ini") {
+        return loadIniConfig(configPath);
+    }
+
     throw new ConfigCreationException(
         "File extension '" ~ extension ~ "' is not recognized as a supported config file format. Please use a specific function to load it, such as 'loadJsonConfig()'");
 }
@@ -853,6 +858,11 @@ version (unittest) {
         assert(javaProperties.get("name") == "Groot");
         assert(javaProperties.get("age") == "8728");
         assert(javaProperties.get("taxNumber") == "null");
+
+        auto iniConfig = loadConfig("testfiles/groot.ini");
+        assert(iniConfig.get("groot.name") == "Groot");
+        assert(iniConfig.get("groot.age") == "8728");
+        assert(iniConfig.get("groot.taxNumber") == "null");
     }
 
     @("Whitespace is preserved in values")
