@@ -25,6 +25,7 @@ alias SupportSections = Flag!"SupportSections";
 alias NormalizeQuotedValues = Flag!"NormalizeQuotedValues";
 alias SupportEqualsSeparator = Flag!"SupportEqualsSeparator";
 alias SupportColonSeparator = Flag!"SupportColonSeparator";
+alias SupportKeysWithoutValues = Flag!"SupportKeysWithoutValues";
 
 /** 
  * A generic reusable key/value config factory that can be configured to parse
@@ -36,7 +37,8 @@ class KeyValueConfigFactory(
     SupportSections supportSections = SupportSections.no,
     NormalizeQuotedValues normalizeQuotedValues = NormalizeQuotedValues.no,
     SupportEqualsSeparator supportEqualsSeparator = SupportEqualsSeparator.no,
-    SupportColonSeparator supportColonSeparator = SupportColonSeparator.no
+    SupportColonSeparator supportColonSeparator = SupportColonSeparator.no,
+    SupportKeysWithoutValues supportKeysWithoutValues = SupportKeysWithoutValues.no
 ) : ConfigFactory {
 
     /**
@@ -98,9 +100,11 @@ class KeyValueConfigFactory(
 
             enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
                     .to!string ~ "): " ~ processedLine);
-            enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ processedLine);
+            enforce!ConfigCreationException(supportKeysWithoutValues || parts.length == 2, "Missing value assignment (L" ~ index
+                    .to!string ~ "): " ~ processedLine);
 
-            auto value = parts[1].strip;
+            auto value = supportKeysWithoutValues && parts.length == 1 ? "" : parts[1].strip;
+
             if (normalizeQuotedValues &&
                 value.length > 1 &&
                 (value.startsWith('"') || value.startsWith('\'')) &&
@@ -126,7 +130,8 @@ version (unittest) {
         SupportSections.no,
         NormalizeQuotedValues.no,
         SupportEqualsSeparator.yes,
-        SupportColonSeparator.no
+        SupportColonSeparator.no,
+        SupportKeysWithoutValues.no
     ) {
     }
 
@@ -169,6 +174,21 @@ version (unittest) {
     unittest {
         assertThrown!ConfigCreationException(new TestKeyValueConfigFactory()
                 .parseConfig("answertolife"));
+    }
+
+    @("Succeed to parse when value assignment is missing and SupportKeysWithoutValues = yes")
+    unittest {
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.no,
+            SupportSemicolonComments.no,
+            SupportSections.no,
+            NormalizeQuotedValues.no,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.no,
+            SupportKeysWithoutValues.yes
+        )().parseConfig("answertolife");
+
+        assert(config.get("answertolife") == "");
     }
 
     @("Substitute env vars")

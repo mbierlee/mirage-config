@@ -13,7 +13,8 @@ module mirage.java;
 
 import mirage.config : ConfigDictionary;
 import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportSemicolonComments,
-    SupportSections, NormalizeQuotedValues, SupportEqualsSeparator, SupportColonSeparator;
+    SupportSections, NormalizeQuotedValues, SupportEqualsSeparator, SupportColonSeparator,
+    SupportKeysWithoutValues;
 
 /** 
  * Creates configuration files from Java properties.
@@ -24,7 +25,8 @@ class JavaPropertiesFactory : KeyValueConfigFactory!(
     SupportSections.no,
     NormalizeQuotedValues.no,
     SupportEqualsSeparator.yes,
-    SupportColonSeparator.yes
+    SupportColonSeparator.yes,
+    SupportKeysWithoutValues.yes
 ) {
 }
 
@@ -61,10 +63,17 @@ version (unittest) {
             # I have a comment
             bla=one
             di.bla=two
+            meh: very
+            much = not much
+            much: much
+            empty
         ");
 
         assert(config.get("bla") == "one");
         assert(config.get("di.bla") == "two");
+        assert(config.get("meh") == "very");
+        assert(config.get("much") == "much");
+        assert(config.get("empty") == "");
     }
 
     @("Parse java properties file")
@@ -77,11 +86,6 @@ version (unittest) {
     @("Fail to parse when there are too many equals signs")
     unittest {
         assertThrown!ConfigCreationException(parseJavaProperties("one=two=three"));
-    }
-
-    @("Fail to parse when value assignment is missing")
-    unittest {
-        assertThrown!ConfigCreationException(parseJavaProperties("answertolife"));
     }
 
     @("Substitute env vars")
