@@ -67,7 +67,7 @@ version (unittest) {
             # I have a comment
             bla=one
             di.bla=two
-            meh: very
+            meh: very # except when meh=not very
             much = not much
             much: much !important!!!!!!!!
             empty
@@ -85,11 +85,6 @@ version (unittest) {
         auto config = loadJavaProperties("testfiles/java.properties");
         assert(config.get("bla") == "one");
         assert(config.get("di.bla") == "two");
-    }
-
-    @("Fail to parse when there are too many equals signs")
-    unittest {
-        assertThrown!ConfigCreationException(parseJavaProperties("one=two=three"));
     }
 
     @("Substitute env vars")
@@ -117,15 +112,6 @@ version (unittest) {
         ");
 
         assert(config.get("one") == "money");
-    }
-
-    @("Remove end-of-line comments")
-    unittest {
-        auto config = parseJavaProperties("
-            server=localhost #todo: change me. default=localhost when not set.
-        ");
-
-        assert(config.get("server") == "localhost");
     }
 
     @("Quotes in values are preserved")
