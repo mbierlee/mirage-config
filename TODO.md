@@ -14,3 +14,4 @@
   - Case insensitive properties and sections
   - Escape characters
   - Support multi-line values with backslash
+  - Example

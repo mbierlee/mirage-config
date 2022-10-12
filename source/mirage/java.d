@@ -46,6 +46,9 @@ ConfigDictionary parseJavaProperties(const string properties) {
     return new JavaPropertiesFactory().parseConfig(properties);
 }
 
+/// ditto
+alias parseJavaConfig = parseJavaProperties;
+
 /** 
  * Load a Java properties file from disk.
  *
@@ -56,6 +59,9 @@ ConfigDictionary parseJavaProperties(const string properties) {
 ConfigDictionary loadJavaProperties(const string filePath) {
     return new JavaPropertiesFactory().loadFile(filePath);
 }
+
+/// ditto
+alias loadJavaConfig = loadJavaProperties;
 
 version (unittest) {
     import std.exception : assertThrown;
@@ -108,7 +114,7 @@ version (unittest) {
 
     @("Values and keys are trimmed")
     unittest {
-        auto config = parseJavaProperties("
+        auto config = parseJavaConfig("
             one    =       money
         ");
 
