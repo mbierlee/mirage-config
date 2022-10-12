@@ -23,6 +23,8 @@ alias SupportHashtagComments = Flag!"SupportHashtagComments";
 alias SupportSemicolonComments = Flag!"SupportSemicolonComments";
 alias SupportSections = Flag!"SupportSections";
 alias NormalizeQuotedValues = Flag!"NormalizeQuotedValues";
+alias SupportEqualsSeparator = Flag!"SupportEqualsSeparator";
+alias SupportColonSeparator = Flag!"SupportColonSeparator";
 
 /** 
  * A generic reusable key/value config factory that can be configured to parse
@@ -32,8 +34,11 @@ class KeyValueConfigFactory(
     SupportHashtagComments supportHashtagComments = SupportHashtagComments.no,
     SupportSemicolonComments supportSemicolonComments = SupportSemicolonComments.no,
     SupportSections supportSections = SupportSections.no,
-    NormalizeQuotedValues normalizeQuotedValues = NormalizeQuotedValues.no
+    NormalizeQuotedValues normalizeQuotedValues = NormalizeQuotedValues.no,
+    SupportEqualsSeparator supportEqualsSeparator = SupportEqualsSeparator.no,
+    SupportColonSeparator supportColonSeparator = SupportColonSeparator.no
 ) : ConfigFactory {
+
     /**
      * Parse a configuration file following the configured key/value conventions.
      *
@@ -43,6 +48,8 @@ class KeyValueConfigFactory(
      */
     override ConfigDictionary parseConfig(string contents) {
         enforce!ConfigCreationException(contents !is null, "Contents cannot be null.");
+        enforce!ConfigCreationException(supportEqualsSeparator || supportColonSeparator, "No key/value separator is supported. Factory must set one either SupportEqualsSeparator or SupportColonSeparator");
+
         auto lines = contents.lineSplitter().array;
         auto properties = new ConfigDictionary();
         auto section = "";
@@ -80,7 +87,15 @@ class KeyValueConfigFactory(
                 continue;
             }
 
-            auto parts = processedLine.split('=');
+            char keyValueSplitter;
+            if (supportEqualsSeparator && processedLine.indexOf('=') >= 0) {
+                keyValueSplitter = '=';
+            } else if (supportColonSeparator && processedLine.indexOf(':') >= 0) {
+                keyValueSplitter = ':';
+            }
+
+            auto parts = processedLine.split(keyValueSplitter);
+
             enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
                     .to!string ~ "): " ~ processedLine);
             enforce!ConfigCreationException(parts.length == 2, "Missing value assignment (L" ~ index.to!string ~ "): " ~ processedLine);
@@ -105,7 +120,14 @@ version (unittest) {
     import std.exception : assertThrown;
     import std.process : environment;
 
-    class TestKeyValueConfigFactory : KeyValueConfigFactory!() {
+    class TestKeyValueConfigFactory : KeyValueConfigFactory!(
+        SupportHashtagComments.no,
+        SupportSemicolonComments.no,
+        SupportSections.no,
+        NormalizeQuotedValues.no,
+        SupportEqualsSeparator.yes,
+        SupportColonSeparator.no
+    ) {
     }
 
     @("Parse standard key/value config")
@@ -123,7 +145,11 @@ version (unittest) {
     unittest {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.yes,
-            SupportSemicolonComments.yes
+            SupportSemicolonComments.yes,
+            SupportSections.no,
+            NormalizeQuotedValues.no,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.no
         )().parseConfig("
             # this is a comment
             ; this is another comment
@@ -176,7 +202,11 @@ version (unittest) {
     unittest {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.yes,
-            SupportSemicolonComments.yes
+            SupportSemicolonComments.yes,
+            SupportSections.no,
+            NormalizeQuotedValues.no,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.no
         )().parseConfig("
             server=localhost #todo: change me. default=localhost when not set.
             port=9876; I think this port = right?
@@ -191,7 +221,10 @@ version (unittest) {
         auto config = new KeyValueConfigFactory!(
             SupportHashtagComments.no,
             SupportSemicolonComments.yes,
-            SupportSections.yes
+            SupportSections.yes,
+            NormalizeQuotedValues.no,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.no
         )().parseConfig("
             applicationName = test me!
 
@@ -223,7 +256,9 @@ version (unittest) {
             SupportHashtagComments.yes,
             SupportSemicolonComments.no,
             SupportSections.no,
-            NormalizeQuotedValues.yes
+            NormalizeQuotedValues.yes,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.no
         )().parseConfig("
             baboon = \"ape\"
             monkey = 'ape'
@@ -237,6 +272,26 @@ version (unittest) {
         assert(config.get("human") == "ape");
         assert(config.get("excessiveWhitespace") == "             ");
         assert(config.get("breaksWithComments") == "'");
+    }
+
+    @("Support colon as key/value separator")
+    unittest {
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.no,
+            SupportSemicolonComments.no,
+            SupportSections.no,
+            NormalizeQuotedValues.no,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.yes
+        )().parseConfig("
+            one = here
+            two: also here
+        ");
+
+        assert(config.get("one") == "here");
+        assert(config.get("two") == "also here");
+
+        assertThrown!ConfigCreationException(new KeyValueConfigFactory!()().parseConfig("a=b")); // No separator is configured
     }
 
 }
