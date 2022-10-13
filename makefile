@@ -17,6 +17,7 @@ clean:
 run-examples: run-quickstartExample\
 	run-jsonExample \
 	run-javaPropertiesExample \
+	run-iniExample \
 	run-valueSubstitutionExample \
 	run-manipulationExample
 
@@ -28,6 +29,9 @@ run-jsonExample:
 
 run-javaPropertiesExample:
 	dub run --build=release --config=javaPropertiesExample
+
+run-iniExample:
+	dub run --build=release --config=iniExample
 
 run-valueSubstitutionExample:
 	dub run --build=release --config=valueSubstitutionExample

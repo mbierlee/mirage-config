@@ -50,6 +50,17 @@
       "workingDirectory": "bin/examples/javaProperties"
     },
     {
+      "name": "iniExample",
+      "targetType": "executable",
+      "description": "Example on how to read and work with INI files.",
+      "targetName": "iniExample",
+      "sourcePaths": ["examples/ini"],
+      "importPaths": ["source"],
+      "copyFiles": ["examples/ini/config.ini"],
+      "targetPath": "bin/examples/ini",
+      "workingDirectory": "bin/examples/ini"
+    },
+    {
       "name": "valueSubstitutionExample",
       "targetType": "executable",
       "description": "Example on how to use environment and config substitution.",
