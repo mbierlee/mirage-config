@@ -27,6 +27,7 @@ alias NormalizeQuotedValues = Flag!"NormalizeQuotedValues";
 alias SupportEqualsSeparator = Flag!"SupportEqualsSeparator";
 alias SupportColonSeparator = Flag!"SupportColonSeparator";
 alias SupportKeysWithoutValues = Flag!"SupportKeysWithoutValues";
+alias SupportMultilineValues = Flag!"SupportMultilineValues";
 
 /** 
  * A generic reusable key/value config factory that can be configured to parse
@@ -40,7 +41,8 @@ class KeyValueConfigFactory(
     NormalizeQuotedValues normalizeQuotedValues = NormalizeQuotedValues.no,
     SupportEqualsSeparator supportEqualsSeparator = SupportEqualsSeparator.no,
     SupportColonSeparator supportColonSeparator = SupportColonSeparator.no,
-    SupportKeysWithoutValues supportKeysWithoutValues = SupportKeysWithoutValues.no
+    SupportKeysWithoutValues supportKeysWithoutValues = SupportKeysWithoutValues.no,
+    SupportMultilineValues supportMultilineValues = SupportMultilineValues.no
 ) : ConfigFactory {
 
     /**
@@ -57,6 +59,9 @@ class KeyValueConfigFactory(
         auto lines = contents.lineSplitter().array;
         auto properties = new ConfigDictionary();
         auto section = "";
+        string key = null;
+        string valueBuffer = "";
+
         foreach (size_t index, string line; lines) {
             auto processedLine = line;
 
@@ -75,7 +80,9 @@ class KeyValueConfigFactory(
 
             processedLine = processedLine.strip;
 
-            if (supportSections && processedLine.startsWith('[') && processedLine.endsWith(']')) {
+            if (supportSections &&
+                key is null &&
+                processedLine.startsWith('[') && processedLine.endsWith(']')) {
                 auto parsedSection = processedLine[1 .. $ - 1];
                 if (parsedSection.startsWith('.')) {
                     section ~= parsedSection;
@@ -90,31 +97,45 @@ class KeyValueConfigFactory(
                 continue;
             }
 
-            char keyValueSplitter;
-            if (supportEqualsSeparator && processedLine.indexOf('=') >= 0) {
-                keyValueSplitter = '=';
-            } else if (supportColonSeparator && processedLine.indexOf(':') >= 0) {
-                keyValueSplitter = ':';
+            string value;
+
+            if (key is null) {
+                char keyValueSplitter;
+                if (supportEqualsSeparator && processedLine.indexOf('=') >= 0) {
+                    keyValueSplitter = '=';
+                } else if (supportColonSeparator && processedLine.indexOf(':') >= 0) {
+                    keyValueSplitter = ':';
+                }
+
+                auto parts = processedLine.split(keyValueSplitter);
+
+                enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
+                        .to!string ~ "): " ~ processedLine);
+                enforce!ConfigCreationException(supportKeysWithoutValues || parts.length == 2, "Missing value assignment (L" ~ index
+                        .to!string ~ "): " ~ processedLine);
+
+                key = [section, parts[0].strip].join('.');
+                value = supportKeysWithoutValues && parts.length == 1 ? "" : parts[1].strip;
+            } else {
+                value = processedLine;
             }
 
-            auto parts = processedLine.split(keyValueSplitter);
+            if (supportMultilineValues && value.endsWith('\\')) {
+                valueBuffer ~= value[0 .. $ - 1];
+                continue;
+            }
 
-            enforce!ConfigCreationException(parts.length <= 2, "Line has too many equals signs and cannot be parsed (L" ~ index
-                    .to!string ~ "): " ~ processedLine);
-            enforce!ConfigCreationException(supportKeysWithoutValues || parts.length == 2, "Missing value assignment (L" ~ index
-                    .to!string ~ "): " ~ processedLine);
-
-            auto value = supportKeysWithoutValues && parts.length == 1 ? "" : parts[1].strip;
-
+            auto fullValue = valueBuffer ~ value;
             if (normalizeQuotedValues &&
-                value.length > 1 &&
-                (value.startsWith('"') || value.startsWith('\'')) &&
-                (value.endsWith('"') || value.endsWith('\''))) {
-                value = value[1 .. $ - 1];
+                fullValue.length > 1 &&
+                (fullValue.startsWith('"') || fullValue.startsWith('\'')) &&
+                (fullValue.endsWith('"') || fullValue.endsWith('\''))) {
+                fullValue = fullValue[1 .. $ - 1];
             }
 
-            auto key = [section, parts[0].strip].join('.');
-            properties.set(key, value);
+            properties.set(key, fullValue);
+            key = null;
+            valueBuffer = "";
         }
 
         return properties;
@@ -133,7 +154,8 @@ version (unittest) {
         NormalizeQuotedValues.no,
         SupportEqualsSeparator.yes,
         SupportColonSeparator.no,
-        SupportKeysWithoutValues.no
+        SupportKeysWithoutValues.no,
+        SupportMultilineValues.no
     ) {
     }
 
@@ -323,6 +345,57 @@ version (unittest) {
         assert(config.get("two") == "also here");
 
         assertThrown!ConfigCreationException(new KeyValueConfigFactory!()().parseConfig("a=b")); // No separator is configured
+    }
+
+    @("Support multiline values")
+    unittest {
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.yes,
+            SupportSemicolonComments.no,
+            SupportExclamationComments.no,
+            SupportSections.yes,
+            NormalizeQuotedValues.yes,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.no,
+            SupportKeysWithoutValues.yes,
+            SupportMultilineValues.yes
+        )().parseConfig("
+            sentence = the quick \\
+                       'brown fox' \\ # comments
+                       [jump]\\
+                \\
+                       ed over \\ #are not part of the
+                       the lazy \\
+            '[dog]'   #value
+
+            not part of the sentence
+        ");
+
+        assert(config.get("sentence") == "the quick 'brown fox' [jump]ed over the lazy '[dog]'");
+    }
+
+    @("Normalize multiline values with quotes")
+    unittest {
+        auto config = new KeyValueConfigFactory!(
+            SupportHashtagComments.no,
+            SupportSemicolonComments.no,
+            SupportExclamationComments.no,
+            SupportSections.no,
+            NormalizeQuotedValues.yes,
+            SupportEqualsSeparator.yes,
+            SupportColonSeparator.no,
+            SupportKeysWithoutValues.no,
+            SupportMultilineValues.yes
+        )().parseConfig("
+            doubles = \"Well then there I was \\
+                        doing my thing.\"
+            singles = 'When suddenly \\
+                a shark bit me \\
+                            from the sky'
+        ");
+
+        assert(config.get("doubles") == "Well then there I was doing my thing.");
+        assert(config.get("singles") == "When suddenly a shark bit me from the sky");
     }
 
 }

@@ -14,7 +14,7 @@ module mirage.ini;
 import mirage.config : ConfigDictionary;
 import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportSemicolonComments,
     SupportExclamationComments, SupportSections, NormalizeQuotedValues, SupportEqualsSeparator,
-    SupportColonSeparator, SupportKeysWithoutValues;
+    SupportColonSeparator, SupportKeysWithoutValues, SupportMultilineValues;
 
 /** 
  * Creates configuration dictionaries from INI files.
@@ -30,7 +30,8 @@ class IniConfigFactory : KeyValueConfigFactory!(
     NormalizeQuotedValues.yes,
     SupportEqualsSeparator.yes,
     SupportColonSeparator.yes,
-    SupportKeysWithoutValues.no
+    SupportKeysWithoutValues.no,
+    SupportMultilineValues.yes
 ) {
 }
 

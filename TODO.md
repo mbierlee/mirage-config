@@ -6,13 +6,13 @@
   - Config manip
   - Env and config var substitution
     - Escaping
+- Generic
+  - Base64 decoding of values
 - Java properties
   - Add unicode escaping
-  - Support multi-line values with backslash
   - Add escaping of key/value separator = and :
 - INI config
   - Case insensitive properties and sections
   - Escape characters
-  - Support multi-line values with backslash
 - TOML
   - Add support for the standard (https://github.com/toml-lang/toml)

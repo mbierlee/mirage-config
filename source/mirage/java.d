@@ -14,7 +14,7 @@ module mirage.java;
 import mirage.config : ConfigDictionary;
 import mirage.keyvalue : KeyValueConfigFactory, SupportHashtagComments, SupportSemicolonComments,
     SupportExclamationComments, SupportSections, NormalizeQuotedValues, SupportEqualsSeparator,
-    SupportColonSeparator, SupportKeysWithoutValues;
+    SupportColonSeparator, SupportKeysWithoutValues, SupportMultilineValues;
 
 /** 
  * Creates configuration dictionaries from Java properties.
@@ -31,7 +31,8 @@ class JavaPropertiesFactory : KeyValueConfigFactory!(
     NormalizeQuotedValues.no,
     SupportEqualsSeparator.yes,
     SupportColonSeparator.yes,
-    SupportKeysWithoutValues.yes
+    SupportKeysWithoutValues.yes,
+    SupportMultilineValues.yes
 ) {
 }
 
