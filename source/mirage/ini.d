@@ -64,6 +64,8 @@ version (unittest) {
     unittest {
         auto config = parseIniConfig("
             globalSection = yes
+            multi = 'we are \\
+                        multi!'
 
             [supersection]
             thefirst = here
@@ -82,6 +84,7 @@ version (unittest) {
         ");
 
         assert(config.get("globalSection") == "yes");
+        assert(config.get("multi") == "we are multi!");
         assert(config.get("supersection.thefirst") == "here");
         assert(config.get("supersection.sub.sandwich") == "maybe tasty");
         assert(config.get("supersection.sub.way.advertisement?") == "nah");

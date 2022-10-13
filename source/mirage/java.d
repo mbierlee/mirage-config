@@ -79,6 +79,8 @@ version (unittest) {
             much = not much
             much: much !important!!!!!!!!
             empty
+            multi = we are \\
+                    two lines
         ");
 
         assert(config.get("bla") == "one");
@@ -86,6 +88,7 @@ version (unittest) {
         assert(config.get("meh") == "very");
         assert(config.get("much") == "much");
         assert(config.get("empty") == "");
+        assert(config.get("multi") == "we are two lines");
     }
 
     @("Parse java properties file")
