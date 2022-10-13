@@ -10,24 +10,26 @@ module examples.quickstart.app;
  */
 
 import std.stdio : writeln;
-import mirage : loadConfig, parseJavaProperties;
+import mirage : loadConfig, parseIniConfig;
 
 void main() {
-    // Load configuration from file (see examples/quickstart/config.json):
+    // Load configuration from file (see examples/quickstart/config.json)
     auto config = loadConfig("config.json");
     writeln(config.get("application.name"));
     writeln(config.get!long("application.version"));
 
-    // Or parse directly from string:
-    auto properties = parseJavaProperties("
+    // Or parse directly from string
+    auto ini = parseIniConfig("
         databaseDriver = Postgres
-        database.host = localhost
-        database.port = 5432
+
+        [database]
+        host = localhost
+        port = 5432
     ");
 
-    auto databaseConfig = properties.getConfig("database");
+    auto databaseConfig = ini.getConfig("database");
 
-    writeln(properties.get("databaseDriver"));
+    writeln(ini.get("databaseDriver"));
     writeln(databaseConfig.get("host"));
     writeln(databaseConfig.get("port"));
 }
