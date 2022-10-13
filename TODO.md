@@ -14,3 +14,5 @@
   - Case insensitive properties and sections
   - Escape characters
   - Support multi-line values with backslash
+- TOML
+  - Add support for the standard (https://github.com/toml-lang/toml)
