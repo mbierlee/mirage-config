@@ -16,3 +16,5 @@
   - Escape characters
 - TOML
   - Add support for the standard (https://github.com/toml-lang/toml)
+- YAML
+  - Add support for the standard
