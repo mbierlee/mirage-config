@@ -1,6 +1,6 @@
 # Mirage Config Changelog
 
-**Version 0.0.0**
+**Version 1.0.0** (27-10-2022)
 * Initial version.
 * Add JSON format.
 * Add Java properties format.
