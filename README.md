@@ -6,7 +6,7 @@ Licensed under the terms of the MIT license - See [LICENSE.txt](LICENSE.txt)
 
 [![DUB Package](https://img.shields.io/dub/v/mirage-config.svg)](https://code.dlang.org/packages/mirage-config) 
 
-Toolkit for loading and using application configuration from various formats.
+Toolkit for loading and using application configuration from various formats for the D programming language.
 
 Features:
 
