@@ -13,7 +13,7 @@ Features:
 - Load from various file formats such as JSON, INI and Java properties (see [Formats](#formats));
 - Environment variable substitution;
 - Internal configuration substitution (Value in config replaced by other path in config);
-- Parse configuration from string or JSONValue instead of from disk.
+- Parse configuration from string or JSONValue or from disk.
 
 ## Getting started
 ### DUB Dependency
