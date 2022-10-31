@@ -594,6 +594,14 @@ abstract class ConfigFactory {
     ConfigDictionary parseConfig(string contents);
 }
 
+/** 
+ * Load config from disk.
+ * A specific loader will be used based on the file's extension.
+ * Params:
+ *   configPath = Path to the configuration file.
+ * Returns: The loaded configuration.
+ * Throws: ConfigCreationException when the file's extension is unrecognized.
+ */
 ConfigDictionary loadConfig(const string configPath) {
     auto extension = configPath.extension.toLower;
     if (extension == ".json") {
