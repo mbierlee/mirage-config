@@ -4,7 +4,7 @@ Version 1.0.0
 Copyright 2022 Mike Bierlee  
 Licensed under the terms of the MIT license - See [LICENSE.txt](LICENSE.txt)
 
-[![DUB Package](https://img.shields.io/dub/v/mirage-config.svg)](https://code.dlang.org/packages/mirage-config) 
+[![DUB Package](https://img.shields.io/dub/v/mirage-config.svg)](https://code.dlang.org/packages/mirage-config)
 
 Toolkit for loading and using application configuration from various formats.
 
@@ -16,10 +16,13 @@ Features:
 - Parse configuration from string or JSONValue instead of from disk.
 
 ## Getting started
+
 ### DUB Dependency
+
 See the [DUB project page](https://code.dlang.org/packages/mirage-config) for instructions on how to include Mirage Config into your project.
 
 ### Quickstart
+
 ```d
 import std.stdio : writeln;
 import mirage : loadConfig, parseJavaProperties;
@@ -51,30 +54,37 @@ More formats are available (see [Formats](#formats).)
 For more details and examples, see the [examples](examples) directory.
 
 ## Formats
+
 The following file formats are currently supported:
 
-| Format      | Extension   | Import<sup>*</sup> | Loader                    | Parser                          | Factory                 |
-|-------------|-------------|--------------------|---------------------------|---------------------------------|-------------------------|
-| _any below_ | _any below_ | `mirage`           | `loadConfig`<sup>**</sup> | _(N/A)_                         |                         |
-| INI         | .ini        | `mirage.ini`       | `loadIniConfig`           | `parseIniConfig`                | `IniConfigFactory`      |
-| Java        | .properties | `mirage.java`      | `loadJavaProperties`      | `parseJavaProperties`           | `JavaPropertiesFactory` |
-| JSON        | .json       | `mirage.json`      | `loadJsonConfig`          | `parseJsonConfig`<sup>***</sup> | `JsonConfigFactory`     |
+| Format      | Extension   | Import<sup>\*</sup> | Loader                      | Parser                             | Factory                 |
+| ----------- | ----------- | ------------------- | --------------------------- | ---------------------------------- | ----------------------- |
+| _any below_ | _any below_ | `mirage`            | `loadConfig`<sup>\*\*</sup> | _(N/A)_                            |                         |
+| INI         | .ini        | `mirage.ini`        | `loadIniConfig`             | `parseIniConfig`                   | `IniConfigFactory`      |
+| Java        | .properties | `mirage.java`       | `loadJavaProperties`        | `parseJavaProperties`              | `JavaPropertiesFactory` |
+| JSON        | .json       | `mirage.json`       | `loadJsonConfig`            | `parseJsonConfig`<sup>\*\*\*</sup> | `JsonConfigFactory`     |
 
 <sup>\*</sup> _Any loader or parser can be imported from the `mirage` package since they are all publicly imported._  
 <sup>\*\*</sup> _Loads files based on their extension. If the file does not use one of the extensions in the table, you must use a specific loader._  
 <sup>\*\*\*</sup> _Besides parsing strings like the other formats, it also accepts a `JSONValue`._
 
-Documentation
--------------
+## Documentation
+
 You can generate documentation from the source code using DUB:
+
 ```
 dub build --build=ddox
 ```
+
 The documentation can then be found in docs/
 
 ## History
 
 For a full overview of changes, see [CHANGES.md](CHANGES.md)
+
+## Poodinis Value Injector
+
+Are you using the [Poodinis Dependency Injection framework](https://github.com/mbierlee/poodinis)? A value injector is available at [this](https://github.com/mbierlee/poodinis-mirage-config-injector) repository. See the README on how to use it.
 
 ## Contributing
 
