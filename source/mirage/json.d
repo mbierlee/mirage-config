@@ -98,7 +98,7 @@ class JsonConfigFactory : ConfigFactory {
 
 /** 
  * Parse JSON config from the given JSON string.
-
+ *
  * Params:
  *   json = Text contents of the config to be parsed.
  * Returns: The parsed configuration.
