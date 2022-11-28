@@ -84,7 +84,7 @@ For a full overview of changes, see [CHANGES.md](CHANGES.md)
 
 ## Poodinis Value Injector
 
-Are you using the [Poodinis Dependency Injection framework](https://github.com/mbierlee/poodinis)? A value injector is available at [this](https://github.com/mbierlee/poodinis-mirage-config-injector) repository. See the README on how to use it.
+Are you using the [Poodinis Dependency Injection framework](https://github.com/mbierlee/poodinis)? A value injector is available at [this](https://github.com/mbierlee/mirage-injector) repository. See the README on how to use it.
 
 ## Contributing
 
