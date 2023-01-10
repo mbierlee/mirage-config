@@ -19,7 +19,6 @@
     {
       "name": "quickstartExample",
       "targetType": "executable",
-      "description": "Minimal example on how to get started.",
       "targetName": "quickstartExample",
       "sourcePaths": ["examples/quickstart"],
       "importPaths": ["source"],
@@ -30,7 +29,6 @@
     {
       "name": "jsonExample",
       "targetType": "executable",
-      "description": "Example on how to read and work with JSON configurations.",
       "targetName": "jsonExample",
       "sourcePaths": ["examples/json"],
       "importPaths": ["source"],
@@ -41,7 +39,6 @@
     {
       "name": "javaPropertiesExample",
       "targetType": "executable",
-      "description": "Example on how to read and work with Java properties.",
       "targetName": "javaPropertiesExample",
       "sourcePaths": ["examples/javaProperties"],
       "importPaths": ["source"],
@@ -52,7 +49,6 @@
     {
       "name": "iniExample",
       "targetType": "executable",
-      "description": "Example on how to read and work with INI files.",
       "targetName": "iniExample",
       "sourcePaths": ["examples/ini"],
       "importPaths": ["source"],
@@ -63,7 +59,6 @@
     {
       "name": "valueSubstitutionExample",
       "targetType": "executable",
-      "description": "Example on how to use environment and config substitution.",
       "targetName": "valueSubstitutionExample",
       "sourcePaths": ["examples/valueSubstitution"],
       "importPaths": ["source"],
@@ -74,7 +69,6 @@
     {
       "name": "manipulationExample",
       "targetType": "executable",
-      "description": "Example on how to change configuration.",
       "targetName": "manipulationExample",
       "sourcePaths": ["examples/manipulation"],
       "importPaths": ["source"],
