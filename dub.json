@@ -1,7 +1,7 @@
 {
   "name": "mirage-config",
   "description": "Configuration toolkit supporting JSON, INI and Java Properties",
-  "copyright": "Copyright © 2022, Mike Bierlee",
+  "copyright": "Copyright © 2022-2023, Mike Bierlee",
   "authors": ["Mike Bierlee"],
   "license": "MIT",
   "-ddoxTool": "scod",
