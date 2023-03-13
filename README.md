@@ -4,7 +4,7 @@ Version 1.0.0
 Copyright 2022-2023 Mike Bierlee  
 Licensed under the terms of the MIT license - See [LICENSE.txt](LICENSE.txt)
 
-[![DUB Package](https://img.shields.io/dub/v/mirage-config.svg)](https://code.dlang.org/packages/mirage-config)
+[![DUB Package](https://img.shields.io/dub/v/mirage-config.svg)](https://code.dlang.org/packages/mirage-config) [![CI](https://github.com/mbierlee/mirage-config/actions/workflows/dub.yml/badge.svg)](https://github.com/mbierlee/mirage-config/actions/workflows/dub.yml)
 
 Toolkit for loading and using application configuration from various formats for the D programming language.
 
@@ -14,6 +14,9 @@ Features:
 - Environment variable substitution;
 - Internal configuration substitution (Value in config replaced by other path in config);
 - Parse configuration from string, JSONValue or from disk.
+
+Requires at least a D 2.097.2 compatible compiler  
+Uses the Phobos standard library  
 
 ## Getting started
 

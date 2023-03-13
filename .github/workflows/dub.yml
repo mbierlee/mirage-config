@@ -56,34 +56,13 @@ jobs:
           - dmd-2.100.2
           - dmd-2.099.1
           - dmd-2.098.1
-          - dmd-2.097.2
-          - dmd-2.096.1
-          - dmd-2.095.1
-          - dmd-2.094.2
-          - dmd-2.093.1
-          - dmd-2.092.1
-          - dmd-2.091.1
-          - dmd-2.090.1
-          - dmd-2.089.1
-          - dmd-2.088.1
-          - dmd-2.087.1
-          - dmd-2.086.1 # Baseline DMD version
+          - dmd-2.097.2 # Baseline DMD version
           - ldc-1.32.0 # eq to dmd v2.102.2
           - ldc-1.31.0 # eq to dmd v2.101.2
           - ldc-1.30.0 # eq to dmd v2.100.1
           - ldc-1.29.0 # eq to dmd v2.099.1
           - ldc-1.28.1 # eq to dmd v2.098.1
           - ldc-1.27.1 # eq to dmd v2.097.1
-          - ldc-1.26.0 # eq to dmd v2.096.1
-          - ldc-1.24.0 # eq to dmd v2.094.1
-          - ldc-1.23.0 # eq to dmd v2.093.1
-          - ldc-1.22.0 # eq to dmd v2.092.1
-          - ldc-1.21.0 # eq to dmd v2.091.1
-          - ldc-1.20.1 # eq to dmd v2.090.1
-          - ldc-1.19.0 # eq to dmd v2.089.1
-          - ldc-1.18.0 # eq to dmd v2.088.1
-          - ldc-1.17.0 # eq to dmd v2.087
-          - ldc-1.16.0 # eq to dmd v2.086.1
     steps:
       - uses: actions/checkout@v2
 
@@ -107,40 +86,42 @@ jobs:
           dub run --build=release --config=valueSubstitutionExample
           dub run --build=release --config=manipulationExample
 
-  gdc-latest:
-    name: GDC on Ubuntu
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+# GDC has compatibility issues
 
-      - name: Install DMD (so dub is available)
-        uses: dlang-community/setup-dlang@v1
-        with:
-          compiler: dmd-latest
+  # gdc-latest:
+  #   name: GDC on Ubuntu
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Install GDC
-        run: |
-          sudo apt-get update
-          sudo apt-get install gdc -y
-          gdc --version
+  #     - name: Install DMD (so dub is available)
+  #       uses: dlang-community/setup-dlang@v1
+  #       with:
+  #         compiler: dmd-latest
 
-      - name: Build library
-        env:
-          DC: gdc
-        run: dub build --compiler=gdc --build=release --config=library
+  #     - name: Install GDC
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install gdc -y
+  #         gdc --version
 
-      - name: Build unittest
-        env:
-          DC: gdc
-        run: dub test --compiler=gdc --build=unittest --config=unittest
+  #     - name: Build library
+  #       env:
+  #         DC: gdc
+  #       run: dub build --compiler=gdc --build=release --config=library
 
-      - name: Build examples
-        env:
-          DC: gdc
-        run: |
-          dub run --compiler=gdc --build=release --config=quickstartExample
-          dub run --compiler=gdc --build=release --config=jsonExample
-          dub run --compiler=gdc --build=release --config=javaPropertiesExample
-          dub run --compiler=gdc --build=release --config=iniExample
-          dub run --compiler=gdc --build=release --config=valueSubstitutionExample
-          dub run --compiler=gdc --build=release --config=manipulationExample
+  #     - name: Build unittest
+  #       env:
+  #         DC: gdc
+  #       run: dub test --compiler=gdc --build=unittest --config=unittest
+
+  #     - name: Build examples
+  #       env:
+  #         DC: gdc
+  #       run: |
+  #         dub run --compiler=gdc --build=release --config=quickstartExample
+  #         dub run --compiler=gdc --build=release --config=jsonExample
+  #         dub run --compiler=gdc --build=release --config=javaPropertiesExample
+  #         dub run --compiler=gdc --build=release --config=iniExample
+  #         dub run --compiler=gdc --build=release --config=valueSubstitutionExample
+  #         dub run --compiler=gdc --build=release --config=manipulationExample
