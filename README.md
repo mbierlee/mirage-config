@@ -1,7 +1,7 @@
 # Mirage Config
 
 Version 1.0.0  
-Copyright 2022-2023 Mike Bierlee  
+Copyright 2022-2025 Mike Bierlee  
 Licensed under the terms of the MIT license - See [LICENSE.txt](LICENSE.txt)
 
 [![DUB Package](https://img.shields.io/dub/v/mirage-config.svg)](https://code.dlang.org/packages/mirage-config) [![CI](https://github.com/mbierlee/mirage-config/actions/workflows/dub.yml/badge.svg)](https://github.com/mbierlee/mirage-config/actions/workflows/dub.yml)
